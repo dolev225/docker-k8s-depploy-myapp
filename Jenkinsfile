@@ -3,7 +3,7 @@ def repo = "dolev1234"
 def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
-podTemplate(cloud: 'kubernetes', containers: [
+podTemplate(cloud: 'kubernetes', containers,helm: [
     containerTemplate(
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
