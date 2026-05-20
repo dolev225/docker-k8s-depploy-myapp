@@ -8,56 +8,48 @@ podTemplate(cloud: 'kubernetes', containers: [
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
     ),
-    containerTemplate(
+     containerTemplate(
         name: 'docker', 
-        image: 'docker:26-dind', 
-        privileged: true,      
-        args: '--storage-driver=vfs' 
+        image: 'docker:26-dind', // Use the latest stable DinD image
+        privileged: true,      // Essential for Docker daemon to run
+        args: '--storage-driver=vfs' // VFS is safest for K8s, though slower
     )], 
   volumes: [
-    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
+    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) // Q: Why do we need this volume?
   ]) {
-    
     node(POD_LABEL) {
-        
-        stage('Checkout') {
+        stage('chackout') {
             container('jnlp') {
-                sh 'git config --global http.sslVerify false'
-                checkout scm
-            }
+            sh '/usr/bin/git config --global http.sslVerify false'
+	    checkout scm
+          }
+        } // end chackout
+        stage('Hello') {
+            container('docker') {
+              sh "docker build -t $appname . "
         } 
-
-        stage('Docker Build') {
-            container('docker') {
-                // Tagging it with the full registry name so it can be pushed later
-                sh "docker build -t ${appimage}:${apptag} ."
-            } 
-        }
-
-        stage('Docker Push') {
-            container('docker') {
-                withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) {
-                    sh """
-                    echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin
-                    docker push ${appimage}:${apptag}
-                    """
+    }
+ }
+stage('docker push') {
+    container(docker){
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds',usernameVariable: 'DOCKER_USER',passwordVariable: 'DOCKER_TOKEN' )]) {
+                sh """
+                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
+                    docker push $appimage:$apptag
+                """
+                
                 } 
             }
         }
-
-        stage('Helm Install') {
-            container('docker') {
-                // Combined into standard shell scripts with correct quoting
-                sh """
-                curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-                chmod 700 get_helm.sh
-                ./get_helm.sh --extra-args "--version v3.12.0"
-                helm template ./chart
-                """
-                
-                // If you actually wanted to install/upgrade the chart:
-                // sh "helm upgrade --install ${appname} ./chart"
-            }
-        }
-    } // end node
-} // end podTemplate
+    }
+stage('helm install '){
+    container('docker'){
+        sh ' apk add --no-cache curl bash '
+        sh """curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+        chmod 700 get_helm.sh
+        ./get_helm.sh """
+        sh 'helm template ./chart'
+    }
+    container('docker')
+        sh 'sh 'install  ./chart''
+}
