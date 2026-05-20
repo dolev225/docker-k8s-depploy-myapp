@@ -3,15 +3,18 @@ def repo = "dolev1234"
 def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
-
-podTemplate(serviceAccount: 'jenkins-helm-agent': [
-    containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
-    containerTemplate(name: 'docker',image: 'docker:26-dind', privileged: true,args: '--storage-driver=vfs'),
-    containerTemplate(name: 'helm',image: 'alpine/helm:3.12.0',ttyEnabled: true,command: 'cat')
+podTemplate(
+    cloud: 'kubernetes', // הגדרת הענן (חובה בג'נקינס לוקלי)
+    serviceAccount: 'jenkins-helm-agent', 
+    containers: [ // תיקון: שימוש במפתח containers במקום נקודתיים
+        containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
+        containerTemplate(name: 'docker', image: 'docker:26-dind', privileged: true, args: '--storage-driver=vfs'),
+        containerTemplate(name: 'helm', image: 'alpine/helm:3.12.0', ttyEnabled: true, command: 'cat')
     ], 
-  volumes: [
-    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
-  ]) {
+    volumes: [
+        emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
+    ]
+) {
     
     node(POD_LABEL) {
         
@@ -24,7 +27,8 @@ podTemplate(serviceAccount: 'jenkins-helm-agent': [
 
         stage('Docker Build') {
             container('docker') {
-                // Tagging it with the full registry name so it can be pushed later
+                // מומלץ להמתין ששירות ה-Docker הפנימי יעלה לחלוטין בלוקל
+                sh 'sleep 5' 
                 sh "docker build -t ${appimage}:${apptag} ."
             } 
         }
@@ -41,12 +45,15 @@ podTemplate(serviceAccount: 'jenkins-helm-agent': [
         }
 
         stage('Helm Install') {
-            steps{
+            // תיקון: הסרת בלוק ה-steps ששייך ל-Declarative Pipeline בלבד
             container('helm') {
-
-                 sh "helm  install ${appname} ./chart"
-                }
+                // שימוש ב-upgrade --install ובאימג' הדינמי החדש שבנינו
+                sh """
+                helm upgrade --install ${appname} ./chart \
+                  --set image.repository=${appimage} \
+                  --set image.tag=${apptag}
+                """
             }
         }
     } 
-} 
+}
