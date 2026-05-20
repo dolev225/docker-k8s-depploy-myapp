@@ -20,14 +20,14 @@ podTemplate(cloud: 'kubernetes', containers: [
     node(POD_LABEL) {
         stage('chackout') {
             container('jnlp') {
-            sh 'ls -la'
-			sh	'sleep (10)'
+				sh '/usr/bin/git config --global http.sslVerify false'
 	    checkout scm
           }
         } // end chackout
 
         stage('Hello') {
             container('docker') {
+			  sh "ls -la"
               sh "docker build -t $appname . "
               sh "echo docker push $appimage"
             }
