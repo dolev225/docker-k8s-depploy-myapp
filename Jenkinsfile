@@ -3,8 +3,7 @@ def repo = "dolev1234"
 def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
-// הוספנו כאן את ה-serviceAccount כדי ש-Helm יוכל לנהל סיקרטים ודיפלוימנטס בקלאסטר
-podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', containers: [
+podTemplate(cloud: 'kubernetes', containers,helm: [
     containerTemplate(
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
@@ -14,17 +13,17 @@ podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', container
         image: 'docker:26-dind', 
         privileged: true,      
         args: '--storage-driver=vfs' 
-    ), // <-- כאן היה חסר פסיק!
+    ),
     containerTemplate(
         name: 'helm',
         image: 'alpine/helm:3.14.0',
         ttyEnabled: true,
         command: 'cat'
     )
-], 
-volumes: [
+    ], 
+  volumes: [
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
-]) {
+  ]) {
     
     node(POD_LABEL) {
         
@@ -37,6 +36,7 @@ volumes: [
 
         stage('Docker Build') {
             container('docker') {
+                // Tagging it with the full registry name so it can be pushed later
                 sh "docker build -t ${appimage}:${apptag} ."
             } 
         }
@@ -54,8 +54,7 @@ volumes: [
 
         stage('Helm Install') {
             container('helm') {
-                // עכשיו זה ירוץ בתוך הקונטיינר המובנה של Helm בצורה מהירה ויציבה
-                sh "helm upgrade --install ${appname} ./chart"
+                 sh "helm upgrade --install ${appname} ./chart"
             }
         }
     } // end node
