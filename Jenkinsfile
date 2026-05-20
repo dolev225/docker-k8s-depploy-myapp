@@ -13,7 +13,14 @@ podTemplate(cloud: 'kubernetes', containers: [
         image: 'docker:26-dind', 
         privileged: true,      
         args: '--storage-driver=vfs' 
-    )], 
+    )
+    containerTemplate(
+        name: 'helm',
+        image: 'alpine/helm:3.14.0',
+        ttyEnabled: true,
+        command: 'cat'
+    )
+    ], 
   volumes: [
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
   ]) {
@@ -46,13 +53,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         }
 
         stage('Helm Install') {
-            container('docker') {
-                // Combined into standard shell scripts with correct quoting
-                sh " apk add --no-cache curl bash"
-                sh """curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
-                    chmod 700 get_helm.sh
-                    ./get_helm.sh
-                """
+            container('helm') {
                  sh "helm upgrade --install ${appname} ./chart"
             }
         }
