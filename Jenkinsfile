@@ -1,4 +1,4 @@
-def appname = "webapi"
+def appname = "dm"
 def repo = "dolev1234"  
 def apptag = "${env.BUILD_NUMBER}"
 def appimage = "docker.io/${repo}/${appname}:${apptag}"
