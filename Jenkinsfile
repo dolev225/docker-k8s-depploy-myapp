@@ -49,15 +49,11 @@ podTemplate(cloud: 'kubernetes', containers: [
             container('docker') {
                 // Combined into standard shell scripts with correct quoting
                 sh " apk add --no-cache curl bash"
-                sh """
-                curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-                chmod 700 get_helm.sh
-                ./get_helm.sh --extra-args "--version v3.12.0"
-                helm template ./chart
+                sh """curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+                    chmod 700 get_helm.sh
+                    ./get_helm.sh
                 """
-                
-                // If you actually wanted to install/upgrade the chart:
-                // sh "helm upgrade --install ${appname} ./chart"
+                 sh "helm upgrade --install ${appname} ./chart"
             }
         }
     } // end node
