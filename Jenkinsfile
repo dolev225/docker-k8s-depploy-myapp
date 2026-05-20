@@ -48,6 +48,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         stage('Helm Install') {
             container('docker') {
                 // Combined into standard shell scripts with correct quoting
+                sh " apk add --no-cache curl bash"
                 sh """
                 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
                 chmod 700 get_helm.sh
