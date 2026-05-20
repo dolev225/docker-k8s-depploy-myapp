@@ -1,3 +1,5 @@
+
+
 def appname = "mydolev"
 def repo = "dolev1234"  
 def appimage = "docker.io/${repo}/${appname}"
@@ -24,22 +26,30 @@ podTemplate(cloud: 'kubernetes', containers: [
 	    checkout scm
           }
         } // end chackout
-        container('docker') {
         stage('Hello') {
-            withCredentials([usernamePassword(credentialsId: 'docker-cred',usernameVariable: 'DOCKER_USER',passwordVariable: 'DOCKER_TOKEN' )])
+            container('docker') {
               sh "docker build -t $appname . "
-              sh "docker login ${docker-cred}
-              sh "docker push "
         } 
     }
  }
-stage('Login and Push') {
+stage('docker push') {
+    container(docker){
                 withCredentials([usernamePassword(credentialsId: 'docker-cred',usernameVariable: 'DOCKER_USER',passwordVariable: 'DOCKER_TOKEN' )]) {
                 sh """
                     echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
                     docker push $appimage:$apptag
                 """
-                    
-                }
+                } 
             }
+        }
     }
+stage('helm install '){
+    container('docker'){
+        bash 'curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-4
+        chmod 700 get_helm.sh
+        ./get_helm.sh '
+        sh 'helm template ./chart'
+    }
+    container('docker')
+        sh 'sh 'install  ./chart''
+}
