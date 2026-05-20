@@ -4,7 +4,7 @@ def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
 // התיקון כאן: שינוי ל-containers: והוספת ה-serviceAccount
-podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', containers: [
+podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', helm: [
     containerTemplate(
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
