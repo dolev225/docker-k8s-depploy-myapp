@@ -3,24 +3,11 @@ def repo = "dolev1234"
 def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
-// התיקון כאן: שינוי ל-containers: והוספת ה-serviceAccount
+
 podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', helm: [
-    containerTemplate(
-        name: 'jnlp', 
-        image: 'jenkins/inbound-agent:latest'
-    ),
-    containerTemplate(
-        name: 'docker', 
-        image: 'docker:26-dind', 
-        privileged: true,      
-        args: '--storage-driver=vfs' 
-    ),
-    containerTemplate(
-        name: 'helm',
-        image: 'alpine/helm:3.14.0',
-        ttyEnabled: true,
-        command: 'cat'
-    )
+    containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
+    containerTemplate(name: 'docker',image: 'docker:26-dind', privileged: true,args: '--storage-driver=vfs'),
+    containerTemplate(name: 'helm',image: 'alpine/helm:3.14.0',ttyEnabled: true,command: 'cat')
     ], 
   volumes: [
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
