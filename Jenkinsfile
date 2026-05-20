@@ -1,7 +1,7 @@
-def appname = "dm"
+def appname = "mydolev"
 def repo = "dolev1234"  
+def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
-def appimage = "docker.io/${repo}/${appname}:${apptag}"
 
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(
@@ -20,17 +20,26 @@ podTemplate(cloud: 'kubernetes', containers: [
     node(POD_LABEL) {
         stage('chackout') {
             container('jnlp') {
-				sh '/usr/bin/git config --global http.sslVerify false'
+            sh '/usr/bin/git config --global http.sslVerify false'
 	    checkout scm
           }
         } // end chackout
-
+        container('docker') {
         stage('Hello') {
-            container('docker') {
-			  sh "ls -la"
+            withCredentials([usernamePassword(credentialsId: 'docker-cred',usernameVariable: 'DOCKER_USER',passwordVariable: 'DOCKER_TOKEN' )])
               sh "docker build -t $appname . "
-              sh "echo docker push $appimage"
-            }
-        } //end hello
+              sh "docker login ${docker-cred}
+              sh "docker push "
+        } 
     }
-}
+ }
+stage('Login and Push') {
+                withCredentials([usernamePassword(credentialsId: 'docker-cred',usernameVariable: 'DOCKER_USER',passwordVariable: 'DOCKER_TOKEN' )]) {
+                sh """
+                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
+                    docker push $appimage:$apptag
+                """
+                    
+                }
+            }
+    }
