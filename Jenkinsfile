@@ -20,7 +20,8 @@ podTemplate(cloud: 'kubernetes', containers: [
     node(POD_LABEL) {
         stage('chackout') {
             container('jnlp') {
-            sh '/usr/bin/git config --global http.sslVerify false'
+            sh 'ls -la'
+			sh	'sleep (10)'
 	    checkout scm
           }
         } // end chackout
