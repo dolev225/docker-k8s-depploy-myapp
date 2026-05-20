@@ -4,10 +4,10 @@ def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
 
-podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', helm: [
+podTemplate(serviceAccount: 'jenkins-helm-agent': [
     containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
     containerTemplate(name: 'docker',image: 'docker:26-dind', privileged: true,args: '--storage-driver=vfs'),
-    containerTemplate(name: 'helm',image: 'alpine/helm:3.14.0',ttyEnabled: true,command: 'cat')
+    containerTemplate(name: 'helm',image: 'alpine/helm:3.12.0',ttyEnabled: true,command: 'cat')
     ], 
   volumes: [
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
@@ -41,9 +41,12 @@ podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', helm: [
         }
 
         stage('Helm Install') {
+            steps{
             container('helm') {
-                 sh "helm upgrade --install ${appname} ./chart"
+
+                 sh "helm  install ${appname} ./chart"
+                }
             }
         }
-    } // end node
-} // end podTemplate
+    } 
+} 
