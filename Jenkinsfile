@@ -1,7 +1,7 @@
 def appname = "webapi"
 def repo = "dolev1234"  
-def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
+def appimage = "docker.io/${repo}/${appname}:${apptag}"
 
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(
@@ -28,7 +28,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         stage('Hello') {
             container('docker') {
               sh "docker build -t $appname . "
-              sh "echo docker push $appimage:${env.BUILD_NUMBER}"
+              sh "echo docker push $appimage"
             }
         } //end hello
     }
