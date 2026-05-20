@@ -3,7 +3,8 @@ def repo = "dolev1234"
 def appimage = "docker.io/${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
-podTemplate(cloud: 'kubernetes', containers,helm: [
+// התיקון כאן: שינוי ל-containers: והוספת ה-serviceAccount
+podTemplate(cloud: 'kubernetes', serviceAccount: 'jenkins-helm-agent', containers: [
     containerTemplate(
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
