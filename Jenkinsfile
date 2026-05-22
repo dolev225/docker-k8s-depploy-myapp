@@ -1,7 +1,7 @@
 def appname = "test-app"
 def repo = "dolev1234"  
 def appimage = "${repo}/${appname}"
-def apptag = '$appimage:${env.BUILD_NUMBER}' 
+def apptag = "${appimage}:${env.BUILD_NUMBER}" 
 
 pipeline {
     agent {
@@ -47,19 +47,20 @@ pipeline {
                             echo" connectoin successfully"
                             echo "--------------------------------------------------------------"
                             echo "pushing image ${apptag} to the hub "
-                            docker push ${apptag}
+                            docker push ${appimage}:${apptag}
                         '''
                     }
                 }
-            } // close container
+            } 
         }
 
-        // --- סטייג' 2: שימוש בקונטיינר של Helm ---
+        // Helm
         stage('Deploy with Helm') {
             agent {
                 docker {
                     image 'alpine/helm:3.14.0' // אימג' רשמי שמכיל את הפקודות של Helm
-                    args '-v /home/jenkins/.kube:/root/.kube'
+                    // אם ה-Helm שלך צריך לגשת לקלאסטר, לרוב ממפים פה את תיקיית ה-kubeconfig. לדוגמה:
+                    // args '-v /home/jenkins/.kube:/root/.kube'
                 }
             }
             steps {
