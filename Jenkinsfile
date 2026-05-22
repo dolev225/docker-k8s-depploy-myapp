@@ -18,7 +18,7 @@ pipeline {
         stage('Build & Push Image') {
             steps {
                 script {
-                    
+                    sh 'ehco ${repo}'
                     
                 }
             }
