@@ -29,7 +29,9 @@ pipeline {
                     echo "--------------------------------------------------------------"
                     echo "Building docker image: ${appimage}:${apptag}"
                     echo "--------------------------------------------------------------"                    
+                    
                     sh "docker build -t ${appimage}:${apptag} ."
+                    
                     sleep 5
                     echo "--------------------------------------------------------------"
                     echo "Docker image built successfully: ${appimage}:${apptag}"
