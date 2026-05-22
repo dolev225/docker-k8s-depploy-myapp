@@ -1,7 +1,7 @@
 def appname = "test-app"
 def repo = "dolev1234"  
-def appimage = "${repo}/${appname}"
-def apptag = "${appimage}:${env.BUILD_NUMBER}" 
+def appimage = "${repo}/${appname}" // dolev1234/test-app
+def apptag = "${env.BUILD_NUMBER}"  // רק מספר הבילד (למשל: 24)
 
 pipeline {
     agent {
@@ -27,50 +27,51 @@ pipeline {
             steps {
                 script {
                     echo "--------------------------------------------------------------"
-                    echo "Building docker image..."
-                    echo "--------------------------------------------------------------"
-                    sh " docker build -t ${apptag} ."
+                    echo "Building docker image: ${appimage}:${apptag}"
+                    echo "--------------------------------------------------------------"                    
+                    sh "docker build -t ${appimage}:${apptag} ."
                     sleep 5
                     echo "--------------------------------------------------------------"
-                    echo "Docker image built successfully:${apptag}"
+                    echo "Docker image built successfully: ${appimage}:${apptag}"
                     echo "--------------------------------------------------------------"
-                    echo "connting to docker hub"
+                    echo "Connecting to Docker Hub..."
 
                     withCredentials([usernamePassword(
                         credentialsId: 'dockerhub1',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_TOKEN'
                     )]) {
-                        sh '''
-                            echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
-                            echo"--------------------------------------------------------------"
-                            echo" connectoin successfully"
+                        sh """
+                            echo "\$DOCKER_TOKEN" | docker login -u "\$DOCKER_USER" --password-stdin
                             echo "--------------------------------------------------------------"
-                            echo "pushing image ${apptag} to the hub "
+                            echo "Connection successful"
+                            echo "--------------------------------------------------------------"
+                            echo "Pushing image ${appimage}:${apptag} to the hub..."
+                            echo "--------------------------------------------------------------"
+                            echo "Push to the docker hub "
+                            echo "--------------------------------------------------------------"
                             docker push ${appimage}:${apptag}
-                        '''
+                            echo "--------------------------------------------------------------"
+                            echo "Push to docker hub successful"
+                            echo "--------------------------------------------------------------"
+                        """
                     }
                 }
             } 
         }
 
-        // Helm
         stage('Deploy with Helm') {
             agent {
                 docker {
-                    image 'alpine/helm:3.14.0' // אימג' רשמי שמכיל את הפקודות של Helm
-                    // אם ה-Helm שלך צריך לגשת לקלאסטר, לרוב ממפים פה את תיקיית ה-kubeconfig. לדוגמה:
-                    // args '-v /home/jenkins/.kube:/root/.kube'
+                    image 'alpine/helm:3.14.0'
                 }
             }
             steps {
                 echo "------------------------ Running inside HELM container ------------------------"
-                // הפקודה הזו תרוץ בתוך קונטיינר ה-Helm שזה עתה נפתח
                 sh 'helm version'
-                
-                // כאן תבוא פקודת ה-deploy האמיתית שלך, למשל:
+                // פקודת ה-deploy העתידית שלך:
                 // sh "helm upgrade --install ${appname} ./charts --set image.tag=${apptag}"
-            } // כאן ג'נקינס אוטומטית סוגר ומכבה את קונטיינר ה-Helm!
+            } 
         }
     }
 }
