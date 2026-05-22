@@ -1,7 +1,7 @@
 def appname = "test-app"
 def repo = "dolev1234"  
 def appimage = "${repo}/${appname}"
-def apptag = '${appimage}"${env.BUILD_NUMBER}'
+def apptag = '${appimage}:${env.BUILD_NUMBER}'
 
 pipeline {
     agent {
