@@ -1,35 +1,13 @@
 def appname = "test-app"
 def repo = "dolev1234"  
 def appimage = "${repo}/${appname}"
-def apptag = '${appimage}:${env.BUILD_NUMBER}'
+def apptag = '${appimage}:${env.BUILD_NUMBER}' 
 
 pipeline {
     agent {
         node {
             label 'agent2' 
         }
-    }
-    podTemplate(cloud: 'kubernetes', containers: [
-    containerTemplate(
-        name: 'jnlp', 
-        image: 'jenkins/inbound-agent:latest'
-    ),
-     containerTemplate(
-        name: 'docker', 
-        image: 'docker:26-dind', // Use the latest stable DinD image
-        privileged: true,      // Essential for Docker daemon to run
-        args: '--storage-driver=vfs' // VFS is safest for K8s, though slower
-    )], 
-  volumes: [
-    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) // Q: Why do we need this volume?
-  ]) {
-    node(POD_LABEL) {
-        stage('checkout') {
-            container('jnlp') {
-            sh '/usr/bin/git config --global http.sslVerify false'
-	    checkout scm
-          }
-        } // end checkout
     }
     
     stages {
@@ -39,36 +17,59 @@ pipeline {
             }
         }
         
-        stage('Build & Push Image') 
-        container('docker) {
+        stage('Build & Push Docker Image') {
+            agent {
+                docker {
+                    image 'docker:26'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
                 script {
-              echo "--------------------------------------------------------------"
-              echo "Building docker image..."
-              echo "--------------------------------------------------------------"
-              sh " docker build -t ${apptag} ."
-              sleep 5
-              echo "--------------------------------------------------------------"
-              echo "Docker image built successfully:${apptag}"
-              echo "--------------------------------------------------------------"
+                    echo "--------------------------------------------------------------"
+                    echo "Building docker image..."
+                    echo "--------------------------------------------------------------"
+                    sh " docker build -t ${apptag} ."
+                    sleep 5
+                    echo "--------------------------------------------------------------"
+                    echo "Docker image built successfully:${apptag}"
+                    echo "--------------------------------------------------------------"
+                    echo "connting to docker hub"
 
-
-         stage('Login and Push') {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub1',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_TOKEN'
-                )]) {
-
-                sh """
-                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
-                    docker push $appimage:$apptag
-                """
-                
-                }
-            }
-                        
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub1',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_TOKEN'
+                    )]) {
+                        sh '''
+                            echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
+                            echo"--------------------------------------------------------------"
+                            echo" connectoin successfully"
+                            echo "--------------------------------------------------------------"
+                            echo "pushing image ${apptag} to the hub "
+                            docker push ${apptag}
+                        '''
                     }
                 }
+            } // close container
+        }
+
+        // --- סטייג' 2: שימוש בקונטיינר של Helm ---
+        stage('Deploy with Helm') {
+            agent {
+                docker {
+                    image 'alpine/helm:3.14.0' // אימג' רשמי שמכיל את הפקודות של Helm
+                    args '-v /home/jenkins/.kube:/root/.kube'
+                }
             }
-        }}}
+            steps {
+                echo "------------------------ Running inside HELM container ------------------------"
+                // הפקודה הזו תרוץ בתוך קונטיינר ה-Helm שזה עתה נפתח
+                sh 'helm version'
+                
+                // כאן תבוא פקודת ה-deploy האמיתית שלך, למשל:
+                // sh "helm upgrade --install ${appname} ./charts --set image.tag=${apptag}"
+            } // כאן ג'נקינס אוטומטית סוגר ומכבה את קונטיינר ה-Helm!
+        }
+    }
+}
