@@ -60,7 +60,7 @@ pipeline {
                 echo "Docker login successfully
                 echo "--------------------------------------------------------------"
                 echo "--------------------------------------------------------------"
-                echo "Docker push to docker hub 
+                echo "Docker push to docker hub "
                 echo "--------------------------------------------------------------"
                 sh    "docker push $appimage:$apptag"
                 echo "--------------------------------------------------------------"
