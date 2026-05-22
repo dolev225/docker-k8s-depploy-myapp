@@ -2,7 +2,7 @@
 def appname = "test-app"
 def repo = "dolev1234"  // Replace with your DockerHub username
 def appimage = "${repo}/${appname}"
-def apptag = '${appname}:${env.BUILD_NUMBER}'
+def apptag = "${appname}:${env.BUILD_NUMBER}"
 
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(
@@ -31,10 +31,10 @@ podTemplate(cloud: 'kubernetes', containers: [
               echo "--------------------------------------------------------------"
               echo "Building docker image..."
               echo "--------------------------------------------------------------"
-              sh "echo " docker build -t ${appimage}:${apptag}.""
+              sh "echo " docker build -t ${apptag}.""
               sleep 5
               echo "--------------------------------------------------------------"
-              echo "Docker image built successfully: ${appimage}:${apptag}"
+              echo "Docker image built successfully: ${apptag}"
               echo "--------------------------------------------------------------"
 
              // sh 'docker run -exec -itd --name ${appname} ${appimage}:${apptag}'
