@@ -1,9 +1,15 @@
 def appname = "test-app"
-def repo = "dolev1234"  
+def repo = "kfire312"  
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
 pipeline {
+    agent {
+        node {
+            label 'agent2' 
+        }
+    }
+    
     stages {
         stage('Checkout') {
             steps {
@@ -14,10 +20,18 @@ pipeline {
         stage('Build & Push Image') {
             steps {
                 script {
-                    sh 'ehco ${repo}'
-                    
+              echo "--------------------------------------------------------------"
+              echo "Building docker image..."
+              echo "--------------------------------------------------------------"
+              echo " docker build -t ${appimage}:${apptag} ."
+              sleep 5
+              echo "--------------------------------------------------------------"
+              echo "Docker image built successfully: ${appimage}:${apptag}"
+              echo "--------------------------------------------------------------"
+ 
+                        
+                    }
                 }
             }
         }
     }
-}
