@@ -6,7 +6,7 @@ def apptag = "${env.BUILD_NUMBER}"  // רק מספר הבילד (למשל: 24)
 pipeline {
     agent {
         node {
-            label 'agent2' 
+            label 'agent2' // רץ על הסוכן הקבוע שלך
         }
     }
     
@@ -18,18 +18,13 @@ pipeline {
         }
         
         stage('Build & Push Docker Image') {
-            agent {
-                docker {
-                    image 'docker:26'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                }
-            }
             steps {
                 script {
                     echo "--------------------------------------------------------------"
                     echo "Building docker image: ${appimage}:${apptag}"
                     echo "--------------------------------------------------------------"                    
                     
+                    // הרצה ישירה על ה-Node מונעת את התקיעה
                     sh "docker build -t ${appimage}:${apptag} ."
                     
                     sleep 5
@@ -50,9 +45,9 @@ pipeline {
                             echo "--------------------------------------------------------------"
                             echo "Pushing image ${appimage}:${apptag} to the hub..."
                             echo "--------------------------------------------------------------"
-                            echo "Push to the docker hub "
-                            echo "--------------------------------------------------------------"
-                            docker push ${appimage}:${apptag}
+                            
+                            sh "docker push ${appimage}:${apptag}"
+                            
                             echo "--------------------------------------------------------------"
                             echo "Push to docker hub successful"
                             echo "--------------------------------------------------------------"
@@ -63,16 +58,16 @@ pipeline {
         }
 
         stage('Deploy with Helm') {
-            agent {
-                docker {
-                    image 'alpine/helm:3.14.0'
-                }
-            }
             steps {
-                echo "------------------------ Running inside HELM container ------------------------"
-                sh 'helm version'
-                // פקודת ה-deploy העתידית שלך:
-                // sh "helm upgrade --install ${appname} ./charts --set image.tag=${apptag}"
+                script {
+                    echo "------------------------ Running inside HELM container ------------------------"
+                    
+                    // מרימים קונטיינר זמני וממפים בצורה מפורשת את ה-WORKSPACE של ג'נקינס
+                    sh "docker run --rm -v ${WORKSPACE}:/apps -w /apps alpine/helm:3.14.0 version"
+                    
+                    // פקודת ה-deploy העתידית שלך תיראה ככה בהמשך:
+                    // sh "docker run --rm -v ${WORKSPACE}:/apps -w /apps -v /home/jenkins/.kube:/root/.kube alpine/helm:3.14.0 upgrade --install ${appname} ./charts --set image.tag=${apptag}"
+                }
             } 
         }
     }
