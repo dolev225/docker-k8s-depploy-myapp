@@ -5,8 +5,26 @@ def apptag = "${env.BUILD_NUMBER}"
 
 pipeline {
     agent {
-        node {
-            label 'agent2' // מתחיל על ה-slave
+        kubernetes {
+            defaultContainer 'jnlp'
+            containers ([
+                containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
+                containerTemplate(
+                    name: 'docker', 
+                    image: 'docker:26-dind', 
+                    privileged: true, 
+                    args: '--storage-driver=vfs'
+                ),
+                containerTemplate(
+                    name: 'helm', 
+                    image: 'alpine/helm:3.14.0', 
+                    ttyEnabled: true, 
+                    command: 'cat'
+                )
+            ])
+            volumes ([
+                emptyDirVolume(mountPath: '/var/lib/docker', memory: false)
+            ])
         }
     }
     
@@ -17,57 +35,44 @@ pipeline {
             }
         }
         
-        stage('Build & Push Docker Image Inside Container') {
+        stage('Build ') {
             steps {
-                script {
-                    echo "--------------------------------------------------------------"
-                    echo "Opening a new Docker container to run the build..."
-                    echo "--------------------------------------------------------------"                    
-                    
-                    // ה-slave פותח קונטיינר חדש של docker:26, ומריץ את ה-build בתוכו!
-                    // אנחנו ממפים את ה-WORKSPACE כדי שהקונטיינר החדש יראה את קבצי ה-Git שלך
-                    sh """
-                        docker run --rm \
-                        -v ${WORKSPACE}:/apps \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        -w /apps \
-                        docker:26 docker build -t ${appimage}:${apptag} .
-                    """
-                    
-                    echo "--------------------------------------------------------------"
-                    echo "Opening container for Login and Push..."
-                    echo "--------------------------------------------------------------"
-
-                    withCredentials([usernamePassword(
-                        credentialsId: 'dockerhub1',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_TOKEN'
-                    )]) {
-                        // ה-slave פותח קונטיינר חדש, מבצע login ו-push מתוכו, ונסגר
-                        sh """
-                            docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            docker:26 sh -c '
-                                echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin
-                                docker push ${appimage}:${apptag}
-                            '
-                        """
+                container('docker') {
+                echo "--------------------------------------------------------------"
+                echo "Building docker image..."
+                echo "--------------------------------------------------------------"
+                sh " docker build -t ${appimage}:${apptag} ."
+                sleep 5
+                echo "--------------------------------------------------------------"
+                echo "Docker image built successfully: ${appimage}:${apptag}"
+                echo "--------------------------------------------------------------"
+                        }
+                    }
+                }
+                stage('Docker push ') {
+            steps {
+                container('docker') {
+                echo "--------------------------------------------------------------"
+                echo "Pushing to docker hub"
+                echo "--------------------------------------------------------------"
+                sh " docker build -t ${appimage}:${apptag} ."
+                sleep 5
+                echo "--------------------------------------------------------------"
+                echo "PUSH successfully: ${appimage}:${apptag}"
+                echo "--------------------------------------------------------------"
+                        }
                     }
                 }
             } 
         }
 
-        stage('Deploy with Helm Inside Container') {
+        stage('Run Helm Template') {
             steps {
-                script {
+                container('helm') {
                     echo "--------------------------------------------------------------"
-                    echo "Opening a new Helm container to run the deploy..."
+                    echo "Running Helm Template inside specialized container..."
                     echo "--------------------------------------------------------------"
-                    
-                    // ה-slave פותח קונטיינר חדש של Helm, מריץ את הפקודה בתוכו, ונסגר
-                    sh "docker run --rm -v ${WORKSPACE}:/apps -w /apps alpine/helm:3.14.0 version"
+                    sh "helm template ${appname} helm-charts/"
                 }
             } 
         }
-    }
-}
