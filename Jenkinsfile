@@ -6,9 +6,8 @@ def apptag = "${env.BUILD_NUMBER}"
 pipeline {
     agent {
         kubernetes {
-            // הגדרה ישירה בקוד שעוקפת את ה-UI של ג'נקינס לחלוטין!
-            serverUrl 'https://localhost:6443'
-            skipTlsVerify true
+            // השרת שלך תומך בפרמטר cloud. נגדיר שם ייחודי כדי שלא יקח ברירת מחדל
+            cloud 'kubernetes-local'
             defaultContainer 'jnlp'
             
             containerTemplates ([
