@@ -33,8 +33,6 @@ pipeline {
             steps {
                 sh '/usr/bin/git config --global http.sslVerify false'
             }
-        }
-        
         stage('Build ') {
             steps {
                 container('docker') {
@@ -99,4 +97,5 @@ pipeline {
                 }
             } 
         }
+}
 }
