@@ -1,51 +1,44 @@
+
 def appname = "test-app"
 def repo = "dolev1234"  // Replace with your DockerHub username
 def appimage = "${repo}/${appname}"
-// שימוש ב-env.BUILD_NUMBER פועל רק בתוך סקופ ה-node/stage, הגדרת משתנה סטטי פה עשויה להיכשל, עדיף להגדיר בפנים או להשתמש בזה ישירות.
+def apptag = "${appname}:${env.BUILD_NUMBER}"
 
-podTemplate(cloud: 'kubernetes', containers: [
+podTemplate(containers: [
     containerTemplate(
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
     ),
-    containerTemplate(
+     containerTemplate(
         name: 'docker', 
-        image: 'docker:26-dind', 
-        privileged: true,      
-        args: '--storage-driver=vfs',
-        command: 'dockerd-entrypoint.sh' // גורם לשרת ה-Docker לעלות ולרוץ ברקע בצורה תקינה בתוך ה-Pod
+        image: 'docker:26-dind', // Use the latest stable DinD image
+        privileged: true,      // Essential for Docker daemon to run
+        args: '--storage-driver=vfs' // VFS is safest for K8s, though slower
     )], 
   volumes: [
-    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
+    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) // Q: Why do we need this volume?
   ]) {
     node(POD_LABEL) {
-        def apptag = "${appname}:${env.BUILD_NUMBER}"
-        
         stage('checkout') {
             container('jnlp') {
-                sh '/usr/bin/git config --global http.sslVerify false'
-                checkout scm
-            }
+            sh '/usr/bin/git config --global http.sslVerify false'
+	    checkout scm
+          }
         } // end checkout
-        
-        // כאן אנחנו מגדירים ל-Pipeline להשתמש בקונטיינר של ה-Docker
         container('docker') {
-            stage("build docker image") {
-                // הגדרת משתנה הסביבה שמפנה את פקודות ה-docker לשרת ה-dind שרץ ב-localhost
-                withEnv(['DOCKER_HOST=tcp://localhost:2375', 'DOCKER_TLS_CERTDIR=']) {
-                    
-                    echo "--------------------------------------------------------------"
-                    echo "Building docker image..."
-                    echo "--------------------------------------------------------------"
-                    
-                    // תיקון הגרשיים השבורים
-                    sh "docker build -t ${apptag} ."
-                    
-                    echo "--------------------------------------------------------------"
-                    echo "Docker image built successfully: ${apptag}"
-                    echo "--------------------------------------------------------------"
-                }
+        stage('build docker image ${apptag}') {
+            
+              echo "--------------------------------------------------------------"
+              echo "Building docker image..."
+              echo "--------------------------------------------------------------"
+              sh "echo " docker build -t ${apptag}.""
+              sleep 5
+              echo "--------------------------------------------------------------"
+              echo "Docker image built successfully: ${apptag}"
+              echo "--------------------------------------------------------------"
+
+             // sh 'docker run -exec -itd --name ${appname} ${appimage}:${apptag}'
             }
         }
     }
-}
+  }
