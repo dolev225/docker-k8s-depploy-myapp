@@ -2,7 +2,7 @@
 def appname = "test-app"
 def repo = "dolev1234"  // Replace with your DockerHub username
 def appimage = "${repo}/${appname}"
-def apptag = "$appname:${env.BUILD_NUMBER}"
+def apptag = "${appname}:${env.BUILD_NUMBER}"
 
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(
