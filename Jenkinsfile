@@ -1,13 +1,9 @@
 def appname = "test-app"
-def repo = "kfire312"  
+def repo = "dolev1234"  
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
 pipeline {
-    agent {
-        
-    }
-    
     stages {
         stage('Checkout') {
             steps {
