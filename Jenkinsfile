@@ -53,11 +53,11 @@ pipeline {
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
                 echo "--------------------------------------------------------------"
-                echo "Docker login 
+                echo "Docker login" 
                 echo "--------------------------------------------------------------"
                 sh "echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin"
                 echo "--------------------------------------------------------------"
-                echo "Docker login successfully
+                echo "Docker login successfully"
                 echo "--------------------------------------------------------------"
                 echo "--------------------------------------------------------------"
                 echo "Docker push to docker hub "
