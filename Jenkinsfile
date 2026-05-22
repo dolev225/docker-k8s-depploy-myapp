@@ -46,6 +46,27 @@ pipeline {
                 echo "--------------------------------------------------------------"
                 echo "Docker image built successfully: ${appimage}:${apptag}"
                 echo "--------------------------------------------------------------"
+
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-cred',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+                echo "--------------------------------------------------------------"
+                echo "Docker login 
+                echo "--------------------------------------------------------------"
+                sh "echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin"
+                echo "--------------------------------------------------------------"
+                echo "Docker login successfully
+                echo "--------------------------------------------------------------"
+                echo "--------------------------------------------------------------"
+                echo "Docker push to docker hub 
+                echo "--------------------------------------------------------------"
+                sh    "docker push $appimage:$apptag"
+                echo "--------------------------------------------------------------"
+                echo "Docker image built successfully: ${appimage}:${apptag}"" 
+                echo "--------------------------------------------------------------"
+                
                         }
                     }
                 }
@@ -60,6 +81,8 @@ pipeline {
                 echo "--------------------------------------------------------------"
                 echo "PUSH successfully: ${appimage}:${apptag}"
                 echo "--------------------------------------------------------------"
+
+
                         }
                     }
                 }
