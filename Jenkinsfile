@@ -1,7 +1,7 @@
 def appname = "test-app"
-def repo = "kfire312"  
+def repo = "dolev1234"  
 def appimage = "${repo}/${appname}"
-def apptag = "${env.BUILD_NUMBER}"
+def apptag = '${appimage}"${env.BUILD_NUMBER}'
 
 pipeline {
     agent {
@@ -23,12 +23,27 @@ pipeline {
               echo "--------------------------------------------------------------"
               echo "Building docker image..."
               echo "--------------------------------------------------------------"
-              echo " docker build -t ${appimage}:${apptag} ."
+              sh " docker build -t ${apptag} ."
               sleep 5
               echo "--------------------------------------------------------------"
-              echo "Docker image built successfully: ${appimage}:${apptag}"
+              echo "Docker image built successfully:${apptag}"
               echo "--------------------------------------------------------------"
- 
+
+
+         stage('Login and Push') {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub1',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+
+                sh """
+                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
+                    docker push $appimage:$apptag
+                """
+                    
+                }
+            }
                         
                     }
                 }
