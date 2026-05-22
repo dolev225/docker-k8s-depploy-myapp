@@ -1,5 +1,5 @@
 
-def appname = "dolev-test"
+def appname = "test-app"
 def repo = "dolev1234"  // Replace with your DockerHub username
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
@@ -25,13 +25,13 @@ podTemplate(cloud: 'kubernetes', containers: [
 	    checkout scm
           }
         } // end checkout
-container('docker') {
+        container('docker') {
         stage('build docker image ${appimage}:${apptag}') {
             
               echo "--------------------------------------------------------------"
               echo "Building docker image..."
               echo "--------------------------------------------------------------"
-              sh " docker build -t ${appimage}:${apptag} ."
+              sh "echo " docker build -t ${appimage}:${apptag}.""
               sleep 5
               echo "--------------------------------------------------------------"
               echo "Docker image built successfully: ${appimage}:${apptag}"
@@ -39,23 +39,6 @@ container('docker') {
 
              // sh 'docker run -exec -itd --name ${appname} ${appimage}:${apptag}'
             }
-            
-        stage('Login and Push') {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-cred',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_TOKEN'
-                )]) {
-
-                sh """
-                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
-                    docker push $appimage:$apptag
-                """
-                    
-                }
-            }
-            
-        
         }
     }
   }
