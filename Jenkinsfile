@@ -6,9 +6,11 @@ def apptag = "${env.BUILD_NUMBER}"
 pipeline {
     agent {
         kubernetes {
-            // השרת שלך תומך בפרמטר cloud. נגדיר שם ייחודי כדי שלא יקח ברירת מחדל
             cloud 'kubernetes-local'
             defaultContainer 'jnlp'
+            
+            // תוספת קריטית 1: אומר לפוד בתוך קוברנטיס איך להגיע לג'נקינס שבחוץ
+            jenkinsUrl 'http://host.docker.internal:8080'
             
             containerTemplates ([
                 containerTemplate(name: 'jnlp', image: 'jenkins/inbound-agent:latest'),
@@ -16,6 +18,7 @@ pipeline {
                     name: 'docker', 
                     image: 'docker:26-dind', 
                     privileged: true, 
+                    // תוספת קריטית 2: vfs לפעמים דורש הגדרת סירוס אבטחה ב-dind מקומי
                     args: '--storage-driver=vfs'
                 ),
                 containerTemplate(
