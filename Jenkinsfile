@@ -64,7 +64,7 @@ pipeline {
                 echo "--------------------------------------------------------------"
                 sh    "docker push $appimage:$apptag"
                 echo "--------------------------------------------------------------"
-                echo "Docker image built successfully: ${appimage}:${apptag}"" 
+                echo "Docker image built successfully: ${appimage}:${apptag}"
                 echo "--------------------------------------------------------------"
                 
                         }
