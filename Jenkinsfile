@@ -1,44 +1,40 @@
-
 def appname = "test-app"
-def repo = "dolev1234"  // Replace with your DockerHub username
+def repo = "kfire312"  // Replace with your DockerHub username
 def appimage = "${repo}/${appname}"
-def apptag = "${appname}:${env.BUILD_NUMBER}"
+def apptag = "${env.BUILD_NUMBER}"
 
-podTemplate(containers: [
-    containerTemplate(
-        name: 'jnlp', 
-        image: 'jenkins/inbound-agent:latest'
-    ),
-     containerTemplate(
-        name: 'docker', 
-        image: 'docker:26-dind', // Use the latest stable DinD image
-        privileged: true,      // Essential for Docker daemon to run
-        args: '--storage-driver=vfs' // VFS is safest for K8s, though slower
-    )], 
-  volumes: [
-    emptyDirVolume(mountPath: '/var/lib/docker', memory: false) // Q: Why do we need this volume?
-  ]) {
-    node(POD_LABEL) {
-        stage('checkout') {
-            container('jnlp') {
-            sh '/usr/bin/git config --global http.sslVerify false'
-	    checkout scm
-          }
-        } // end checkout
-        container('docker') {
-        stage('build docker image ${apptag}') {
-            
-              echo "--------------------------------------------------------------"
-              echo "Building docker image..."
-              echo "--------------------------------------------------------------"
-              sh "echo " docker build -t ${apptag}.""
-              sleep 5
-              echo "--------------------------------------------------------------"
-              echo "Docker image built successfully: ${apptag}"
-              echo "--------------------------------------------------------------"
-
-             // sh 'docker run -exec -itd --name ${appname} ${appimage}:${apptag}'
+pipeline {
+    agent {
+        node {
+            label 'agent2' // ה-Pipeline מתחיל על ה-slave שלך
+        }
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                sh '/usr/bin/git config --global http.sslVerify false'
+                checkout scm
+            }
+        }
+        
+        stage('Run Inside Container') {
+            agent {
+                docker {
+                    // האימג' שה-slave ימשוך ויריץ כקונטיינר זמני
+                    image 'docker:26-dind'
+                    // הגדרות הרצה (כמו מצב פריבילגי ומיפוי ווליום כפי שרצית)
+                    args '--privileged -v /var/lib/docker:/var/lib/docker'
+                }
+            }
+            steps {
+                echo "------------------------ Running Inside the Container ------------------------"
+                // כל פקודה פה רצה *בתוך* הקונטיינר של ה-dind שזה עתה עלה
+                sh 'docker --version' 
+                
+                // כאן תוכל להריץ את פקודות הבנייה שלך:
+                // sh "docker build -t ${appimage}:${apptag} ."
             }
         }
     }
-  }
+}
