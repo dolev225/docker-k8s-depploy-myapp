@@ -14,7 +14,7 @@ podTemplate(cloud: 'kubernetes', containers: [
     ),
     containerTemplate(
         name: 'helm', 
-        image: 'jenkins/inbound-agent:latest'
+        image: 'alpine/helm:3.14.0'
     ),
      containerTemplate(
         name: 'docker', 
@@ -31,8 +31,8 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "checkout"
           }
         } // end chackout
-        container('docker'){
         stage('build') {
+            container('docker'){
              echo "--------------------------------------------------------------"
                 echo "Building docker image..."
                 echo "--------------------------------------------------------------"
@@ -64,7 +64,8 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
     } //end build
 
-        stage('helm install') {
+        stage('helm install') 
+        container('helm'){
              {
                 sh """ 
                 apk add --no-cache curl bash
