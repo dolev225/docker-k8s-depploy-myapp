@@ -84,4 +84,3 @@ podTemplate(cloud: 'kubernetes', containers: [
         } // סיום stage helm install
         
     } // סיום node
-} // סיום podTemplate
