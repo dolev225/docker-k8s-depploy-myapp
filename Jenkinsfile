@@ -4,7 +4,7 @@ def build = env.BUILD_NUMBER
 def DEBUG = true
 def DEPLOY = false
 
-def appname = "test-2"
+/def appname = "test-2"
 def repo = "dolev1234"  // Replace with your DockerHub username
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
@@ -61,7 +61,7 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
             
             stage('push') {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) 
                     
                     echo "--------------------------------------------------------------"
                     echo "Docker login" 
@@ -80,7 +80,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                     echo "--------------------------------------------------------------"
                     echo "Docker image pushed successfully: ${appimage}:${apptag}"
                     echo "--------------------------------------------------------------"
-                }
+                
             }
             
         } // סיום container docker
