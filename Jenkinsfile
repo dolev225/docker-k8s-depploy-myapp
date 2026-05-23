@@ -77,7 +77,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "--------------------------------------------------------------"
                 echo "Running Helm Template..."
                 echo "--------------------------------------------------------------"
-                sh "helm template ${appname} helm-charts/"
+                sh "helm template ${appname} ./chart"
             }
         } // סיום stage helm install
         
