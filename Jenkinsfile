@@ -68,9 +68,8 @@ podTemplate(cloud: 'kubernetes', containers: [
                     
                 }
             }
-               }
+        }
             
-        } // סיום container docker
 
         // שלב ה-Helm מורץ בתוך קונטיינר ה-Helm שביקשנו ממנו להישאר דלוק
         stage('helm install') {
@@ -78,9 +77,9 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "--------------------------------------------------------------"
                 echo "Running Helm Template..."
                 echo "--------------------------------------------------------------"
-                // אין צורך בהורדות או התקנות - מריצים ישירות את הפקודה!
                 sh "helm template ${appname} helm-charts/"
             }
         } // סיום stage helm install
         
     } // סיום node
+}
