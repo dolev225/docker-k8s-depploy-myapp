@@ -60,7 +60,7 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
             
             stage('push') {
-                withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) {
                     
                     echo "--------------------------------------------------------------"
                     echo "Docker login" 
