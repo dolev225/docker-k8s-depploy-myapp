@@ -55,27 +55,20 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
             
             stage('push') {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub1', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) 
+               withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub1',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_TOKEN'
+                )]) {
+
+                sh """
+                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
+                    docker push $appimage:$apptag
+                """
                     
-                    echo "--------------------------------------------------------------"
-                    echo "Docker login" 
-                    echo "--------------------------------------------------------------"
-                    // הוספת \ לפני סימן ה-$ כדי שהסיסמה לא תודפס בטעות ללוגים של ג'נקינס
-                    sh "echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin"
-                    
-                    echo "--------------------------------------------------------------"
-                    echo "Docker login successfully"
-                    echo "--------------------------------------------------------------"
-                    echo "--------------------------------------------------------------"
-                    echo "Docker push to docker hub "
-                    echo "--------------------------------------------------------------"
-                    sh "docker push ${appimage}:${apptag}"
-                    
-                    echo "--------------------------------------------------------------"
-                    echo "Docker image pushed successfully: ${appimage}:${apptag}"
-                    echo "--------------------------------------------------------------"
-                
+                }
             }
+               }
             
         } // סיום container docker
 
