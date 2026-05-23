@@ -64,7 +64,7 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
     } //end build
 
-        stage('helm install') 
+        stage('helm install') {
         container('helm'){
              {
                 sh """ 
@@ -76,4 +76,5 @@ podTemplate(cloud: 'kubernetes', containers: [
                 """
              }
            }
+        }
 } //end deploy
