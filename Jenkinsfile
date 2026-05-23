@@ -18,6 +18,7 @@ podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(
         name: 'helm', 
         image: 'alpine/helm:3.14.0' // האימג' כבר מגיע עם helm 
+        command: 'sleep',
         args:'99d'
     ),
     containerTemplate(
