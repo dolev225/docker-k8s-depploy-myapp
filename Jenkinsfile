@@ -66,7 +66,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                     echo "Docker login" 
                     echo "--------------------------------------------------------------"
                     // הוספת \ לפני סימן ה-$ כדי שהסיסמה לא תודפס בטעות ללוגים של ג'נקינס
-                    sh "echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin"
+                    sh "echo '$DOCKER_TOKEN' | docker login -u \$DOCKER_USER --password-stdin"
                     
                     echo "--------------------------------------------------------------"
                     echo "Docker login successfully"
