@@ -1,25 +1,28 @@
+// 1. הגדרת משתני הסביבה (עדכן את הערכים בהתאם לפרויקט שלך)
 def branch = env.BRANCH_NAME
 def build = env.BUILD_NUMBER
 def DEBUG = true
 def DEPLOY = false
 
-// משתנים קריטיים - ודא שהגדרת אותם אצלך (או שנה את השמות כאן בהתאם)
-def appname = "my-app"
-def appimage = "your-dockerhub-username/my-image"
-def apptag = "build-${build}"
+// משתנים עבור שלבי הדוקר וההלם - שנה את השמות לפי הצורך אצלך:
+def appname = "my-kubernetes-app"
+def appimage = "your-dockerhub-username/my-app" // שם המשתמש והרפוזיטורי שלך בדוקר האב
+def apptag = "build-${build}"                  // תג דינמי לפי מספר הבילד
 
 def kubernetesurl = "https://kubernetes.default.svc"
 
+// 2. הגדרת הפוד בקובורנטיס
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
     ),
+    // התיקון הקריטי: הוספת command ו-args כדי למנוע מהקונטיינר למות מיד כשהוא עולה
     containerTemplate(
         name: 'helm', 
-        image: 'alpine/helm:3.14.0' // האימג' כבר מגיע עם helm 
+        image: 'alpine/helm:3.14.0',
         command: 'sleep',
-        args:'99d'
+        args: '99d'
     ),
     containerTemplate(
         name: 'docker', 
@@ -28,19 +31,21 @@ podTemplate(cloud: 'kubernetes', containers: [
         args: '--storage-driver=vfs' 
     )], 
   volumes: [
+    // ווליום חיוני עבור פעילות תקינה ומהירה של Docker in Docker
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
   ]) {
     
+    // 3. שלבי הריצה (Pipeline Stages)
     node(POD_LABEL) {
         
         stage('checkout') {
             container('jnlp') {
-                echo "checkout"
-                checkout scm // משיכת הקוד האמיתי מהגיט
+                echo "Checking out code from Git..."
+                checkout scm // משיכת הקוד האמיתי מהריפוזיטורי שלך
             }
         } 
-        
-        // עוטפים את שלבי הדוקר בקונטיינר של docker
+
+        // שלבי ה-Build וה-Push מורצים יחד בתוך קונטיינר ה-Docker
         container('docker') {
             
             stage('build') {
@@ -54,14 +59,13 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "--------------------------------------------------------------"
             }
             
-            // תיקון: הוספת גרשיים לשם השלב וסגירה נכונה של ה-withCredentials
             stage('push') {
                 withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) {
                     
                     echo "--------------------------------------------------------------"
                     echo "Docker login" 
                     echo "--------------------------------------------------------------"
-                    // תיקון: הוספת \ לפני ה-DOCKER_TOKEN כדי להגן על הסיסמה בלוגים של ג'נקינס
+                    // הוספת \ לפני סימן ה-$ כדי שהסיסמה לא תודפס בטעות ללוגים של ג'נקינס
                     sh "echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin"
                     
                     echo "--------------------------------------------------------------"
@@ -75,17 +79,21 @@ podTemplate(cloud: 'kubernetes', containers: [
                     echo "--------------------------------------------------------------"
                     echo "Docker image pushed successfully: ${appimage}:${apptag}"
                     echo "--------------------------------------------------------------"
-                } // סוף withCredentials
-            } // סוף stage push
+                }
+            }
             
-        } // סוף container docker
+        } // סיום container docker
 
+        // שלב ה-Helm מורץ בתוך קונטיינר ה-Helm שביקשנו ממנו להישאר דלוק
         stage('helm install') {
             container('helm') {
-                // תיקון: ניקוי ה-curl וההורדות. ה-Helm כבר מותקן באימג', מריצים ישירות!
+                echo "--------------------------------------------------------------"
+                echo "Running Helm Template..."
+                echo "--------------------------------------------------------------"
+                // אין צורך בהורדות או התקנות - מריצים ישירות את הפקודה!
                 sh "helm template ${appname} helm-charts/"
             }
-        } // סוף stage helm install
+        } // סיום stage helm install
         
-    } // סוף node
-} // סוף podTemplate
+    } // סיום node
+} // סיום podTemplate
