@@ -6,7 +6,7 @@ def DEPLOY = false
 
 // משתנים עבור שלבי הדוקר וההלם - שנה את השמות לפי הצורך אצלך:
 def appname = "my-kubernetes-app"
-def appimage = "your-dockerhub-username/my-app" // שם המשתמש והרפוזיטורי שלך בדוקר האב
+def appimage = "dolev1234" // שם  והרפוזיטורי שלך בדוקר האב
 def apptag = "build-${build}"                  // תג דינמי לפי מספר הבילד
 
 def kubernetesurl = "https://kubernetes.default.svc"
