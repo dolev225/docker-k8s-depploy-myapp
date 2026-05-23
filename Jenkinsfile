@@ -4,10 +4,11 @@ def build = env.BUILD_NUMBER
 def DEBUG = true
 def DEPLOY = false
 
-// משתנים עבור שלבי הדוקר וההלם - שנה את השמות לפי הצורך אצלך:
-def appname = "my-kubernetes-app"
-def appimage = "dolev1234" // שם  והרפוזיטורי שלך בדוקר האב
-def apptag = "build-${build}"                  // תג דינמי לפי מספר הבילד
+/def appname = "test-2"
+def repo = "dolev1234"  // Replace with your DockerHub username
+def appimage = "${repo}/${appname}"
+def apptag = "${env.BUILD_NUMBER}"
+
 
 def kubernetesurl = "https://kubernetes.default.svc"
 
