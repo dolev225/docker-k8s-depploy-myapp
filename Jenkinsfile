@@ -1,11 +1,5 @@
-// 1. הגדרת משתני הסביבה (עדכן את הערכים בהתאם לפרויקט שלך)
-def branch = env.BRANCH_NAME
-def build = env.BUILD_NUMBER
-def DEBUG = true
-def DEPLOY = false
-
-/def appname = "test-2"
-def repo = "dolev1234"  // Replace with your DockerHub username
+def appname = "test-2"
+def repo = "dolev1234" 
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
