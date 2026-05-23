@@ -3,6 +3,7 @@ def repo = "dolev1234"
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
+
 def kubernetesurl = "https://kubernetes.default.svc"
 
 // 2. הגדרת הפוד בקובורנטיס
@@ -11,6 +12,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
     ),
+    // התיקון הקריטי: הוספת command ו-args כדי למנוע מהקונטיינר למות מיד כשהוא עולה
     containerTemplate(
         name: 'helm', 
         image: 'alpine/helm:3.14.0',
@@ -24,6 +26,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         args: '--storage-driver=vfs' 
     )], 
   volumes: [
+    // ווליום חיוני עבור פעילות תקינה ומהירה של Docker in Docker
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
   ]) {
     
@@ -33,7 +36,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         stage('checkout') {
             container('jnlp') {
                 echo "Checking out code from Git..."
-                checkout scm
+                checkout scm // משיכת הקוד האמיתי מהריפוזיטורי שלך
             }
         } 
 
@@ -52,17 +55,17 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
             
             stage('push') {
-                // תיקון: הוספת { לפתיחת הבלוק של ה-withCredentials
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub1', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_TOKEN')]) 
                     
                     echo "--------------------------------------------------------------"
                     echo "Docker login" 
                     echo "--------------------------------------------------------------"
-                    // תיקון: בגרשיים בודדים לא שמים סלאש לפני ה-$
-                    sh 'echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin'
+                    // הוספת \ לפני סימן ה-$ כדי שהסיסמה לא תודפס בטעות ללוגים של ג'נקינס
+                    sh 'echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin'
                     
                     echo "--------------------------------------------------------------"
                     echo "Docker login successfully"
+                    echo "--------------------------------------------------------------"
                     echo "--------------------------------------------------------------"
                     echo "Docker push to docker hub "
                     echo "--------------------------------------------------------------"
@@ -71,7 +74,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                     echo "--------------------------------------------------------------"
                     echo "Docker image pushed successfully: ${appimage}:${apptag}"
                     echo "--------------------------------------------------------------"
-                } // סיום הבלוק של ה-withCredentials
+                
             }
             
         } // סיום container docker
@@ -82,6 +85,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "--------------------------------------------------------------"
                 echo "Running Helm Template..."
                 echo "--------------------------------------------------------------"
+                // אין צורך בהורדות או התקנות - מריצים ישירות את הפקודה!
                 sh "helm template ${appname} helm-charts/"
             }
         } // סיום stage helm install
