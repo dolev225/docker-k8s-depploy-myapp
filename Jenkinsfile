@@ -85,9 +85,9 @@ podTemplate(cloud: 'kubernetes', containers: [
                 )]) {
                     // מירכאות בודדות למניעת חשיפת סיסמה ובעיות שרשור
                     sh """
-                        echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin
-                        docker push \$appimage:\$apptag
-                    """
+                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
+                    docker push $appimage:$apptag
+                """
                 }
             }
         } // סיום container docker
