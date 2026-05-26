@@ -6,16 +6,26 @@ def apptag = "${env.BUILD_NUMBER}"
 
 def kubernetesurl = "https://kubernetes.default.svc"
 
-// 2. הגדרת הפוד בקובורנטיס
 podTemplate(cloud: 'kubernetes', containers: [
     containerTemplate(
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
     ),
-    // התיקון הקריטי: הוספת command ו-args כדי למנוע מהקונטיינר למות מיד כשהוא עולה
     containerTemplate(
         name: 'helm', 
         image: 'alpine/helm:3.14.0',
+        command: 'sleep',
+        args: '99d'
+    ),
+    containerTemplate(
+        name: 'bandit',
+        image: 'pyupio/bandit:latest',
+        command: 'sleep',
+        args: '99d'
+    ),
+    containerTemplate(
+        name: 'trivy',
+        image: 'aquasec/trivy:latest',
         command: 'sleep',
         args: '99d'
     ),
@@ -26,23 +36,35 @@ podTemplate(cloud: 'kubernetes', containers: [
         args: '--storage-driver=vfs' 
     )], 
   volumes: [
-    // ווליום חיוני עבור פעילות תקינה ומהירה של Docker in Docker
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
   ]) {
     
-    // 3. שלבי הריצה (Pipeline Stages)
+(Pipeline Stages)
     node(POD_LABEL) {
         
-        stage('checkout') {
+        stage('check SCM ') {
             container('jnlp') {
                 echo "Checking out code from Git..."
-                checkout scm // משיכת הקוד האמיתי מהריפוזיטורי שלך
+                checkout scm 
             }
         } 
-
-        // שלבי ה-Build וה-Push מורצים יחד בתוך קונטיינר ה-Docker
-        container('docker') {
-            
+        stage ('Linting')(
+            parallel(
+                stage('flask8 check')
+                    (
+                    echo "flask8 command"
+                    )
+                stage('Shell check')
+                    (
+                    echo "Shell command"
+                    )
+                stage('Hadolint Check')
+                    (
+                    echo "Hadolint command"
+                    )
+            )    
+        ) //end of 'check code'
+        container('docker') {  
             stage('build') {
                 echo "--------------------------------------------------------------"
                 echo "Building docker image..."
@@ -70,8 +92,6 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
         }
             
-
-        // שלב ה-Helm מורץ בתוך קונטיינר ה-Helm שביקשנו ממנו להישאר דלוק
         stage('helm install') {
             container('helm') {
                 echo "--------------------------------------------------------------"
@@ -79,7 +99,23 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "--------------------------------------------------------------"
                 sh "helm template ${appname} ./chart"
             }
-        } // סיום stage helm install
-        
-    } // סיום node
+        } // end of helm
+    } // end of label
+
+    stage ('Security Scanning'){
+        parallel{
+            container('trivy'){
+                stage('Trivy Check')
+                {
+                sh "trivy image ."
+                }
+            }
+            container('bandit'){
+                stage('Bandit Check')
+                    {
+                    sh "bandit -r ."
+                    }
+            }   
+            }\\ end of Security Scanning
+        }   
 }
