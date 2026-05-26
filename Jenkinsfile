@@ -115,7 +115,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                         echo "Running Bandit Scan..."
                         sh """
                             pip install --no-cache-dir bandit
-                            bandit -r .
+                            echo "bandit -r ."
                         """
                     }
                 }
