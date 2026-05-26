@@ -84,10 +84,10 @@ podTemplate(cloud: 'kubernetes', containers: [
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
                     // מירכאות בודדות למניעת חשיפת סיסמה ובעיות שרשור
-                    sh '''
+                    sh """
                         echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin
                         docker push \$appimage:\$apptag
-                    '''
+                    """
                 }
             }
         } // סיום container docker
