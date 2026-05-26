@@ -1,4 +1,4 @@
-def appname = "test-2"
+def appname = "test-3"
 def repo = "dolev1234" 
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
