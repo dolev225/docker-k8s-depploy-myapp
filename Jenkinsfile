@@ -51,7 +51,6 @@ podTemplate(cloud: 'kubernetes', containers: [
             parallel(
                 'flake8 check': {
                     echo "Running flake8 command..."
-                    // sh "flake8 ."
                 },
                 'Shell check': {
                     echo "Running Shell check..."
@@ -88,8 +87,8 @@ podTemplate(cloud: 'kubernetes', containers: [
                         echo "bandit -r . -x B311,B104"
                     }
                 }
-            )
-        } // end of Build & Security
+            )// end of parallel
+        } 
         
         stage('Push Image') {
             container('docker') {  
@@ -104,7 +103,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                     """
                 }
             }
-        }
+        } // end of push image
             
         stage('Helm Install') {
             container('helm') {
@@ -113,7 +112,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "--------------------------------------------------------------"
                 sh "helm template ${appname} ./chart"
             }
-        }
+        }// end of helm install
         
     } // end of node
-} // end of podTemplate
+} 
