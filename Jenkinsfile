@@ -86,7 +86,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                 },
                 'Bandit Check': {
                     container('bandit') {
-                        sh "bandit -r . -x B311,B104"
+                        sh "bandit -r . -x B330,B605"
                     }
                 }
             )
