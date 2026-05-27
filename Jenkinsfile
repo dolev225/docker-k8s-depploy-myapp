@@ -1,7 +1,8 @@
-def appname = "test-3"
+def appname = "test-4"
 def repo = "dolev1234" 
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
+
 
 def kubernetesurl = "https://kubernetes.default.svc"
 
@@ -18,7 +19,7 @@ podTemplate(cloud: 'kubernetes', containers: [
     ),
     containerTemplate(
         name: 'bandit',
-        image: 'python:3.9-slim',
+        image: 'pyupio/bandit:latest',
         command: 'sleep',
         args: '99d'
     ),
@@ -38,35 +39,34 @@ podTemplate(cloud: 'kubernetes', containers: [
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
   ]) {
     
-    // כל הצינור רץ בתוך ה-node
+(Pipeline Stages)
     node(POD_LABEL) {
         
-        stage('check SCM') {
+        stage('check SCM ') {
             container('jnlp') {
                 echo "Checking out code from Git..."
                 checkout scm 
             }
         } 
-        
-        stage('Linting') {
-            container('jnlp') { // מריצים בתוך ה-agent הבסיסי
-                parallel(
-                    'flake8 check': {
-                        echo "Running flake8 command..."
-                        // פקודה עתידית: sh "flake8 ."
-                    },
-                    'Shell check': {
-                        echo "Running Shell check command..."
-                    },
-                    'Hadolint Check': {
-                        echo "Running Hadolint command..."
-                    }
-                )
-            }
-        }
-
-        container('docker') {  
-            stage('build') {
+        stage ('Linting')(
+            parallel(
+                stage('flask8 check')
+                    (
+                    echo "flask8 command"
+                    )
+                stage('Shell check')
+                    (
+                    echo "Shell command"
+                    )
+                stage('Hadolint Check')
+                    (
+                    echo "Hadolint command"
+                    )
+            )    
+        ) //end of 'check code'
+            stage('build')
+            parallel{ {
+                container('docker') { 
                 echo "--------------------------------------------------------------"
                 echo "Building docker image..."
                 echo "--------------------------------------------------------------"
@@ -76,51 +76,47 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "Docker image built successfully: ${appimage}:${apptag}"
                 echo "--------------------------------------------------------------"
             }
-            
+            stage ('Security Scanning'){
+            parallel{
+            container('trivy'){
+                stage('Trivy Check')
+                {
+                sh "trivy image ."
+                }
+            }
+            container('bandit'){
+                stage('Bandit Check')
+                    {
+                    sh "bandit -r ."
+                    }
+            }   
+            }\\ end of Security Scanning
+        }   
+    }   
+}
+            container('docker') {  
             stage('push') {
-                withCredentials([usernamePassword(
+               withCredentials([usernamePassword(
                     credentialsId: 'dockerhub1',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
-                    // מירכאות בודדות למניעת חשיפת סיסמה ובעיות שרשור
-                    sh """
+
+                sh """
                     echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
                     docker push $appimage:$apptag
                 """
+                    
                 }
             }
-        } // סיום container docker
+        }
             
         stage('helm install') {
             container('helm') {
                 echo "--------------------------------------------------------------"
                 echo "Running Helm Template..."
                 echo "--------------------------------------------------------------"
-                sh "helm template ${appname} ./chart --set image.tag=${apptag}"
+                sh "helm template ${appname} ./chart"
             }
-        }
-
-        stage('Security Scanning') {
-            parallel(
-                'Trivy Check': {
-                    container('trivy') {
-                        echo "Running Trivy Scan..."
-                        // סריקת האימג' המקומי שנבנה בשלבים הקודמים
-                        sh "trivy image ${appimage}:${apptag}"
-                    }
-                },
-                'Bandit Check': {
-                    container('bandit') {
-                        echo "Running Bandit Scan..."
-                        sh """
-                            pip install --no-cache-dir bandit
-                            echo "bandit -r ."
-                        """
-                    }
-                }
-            )
-        } // סיום Security Scanning
-        
-    } // סיום node (עבר לסוף כדי לעטוף את הכל!)
-} // סיום podTemplate
+        } // end of helm
+    } // end of label
