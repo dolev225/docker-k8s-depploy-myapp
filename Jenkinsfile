@@ -3,7 +3,6 @@ def repo = "dolev1234"
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
 
-
 def kubernetesurl = "https://kubernetes.default.svc"
 
 podTemplate(cloud: 'kubernetes', containers: [
@@ -39,34 +38,33 @@ podTemplate(cloud: 'kubernetes', containers: [
     emptyDirVolume(mountPath: '/var/lib/docker', memory: false) 
   ]) {
     
-(Pipeline Stages)
     node(POD_LABEL) {
         
-        stage('check SCM ') {
+        stage('check SCM') {
             container('jnlp') {
                 echo "Checking out code from Git..."
                 checkout scm 
             }
         } 
-        stage ('Linting')(
+        
+        stage('Linting') {
+            // הרצה מקבילית של שלבי הצינור (Pipeline Scripted Parallel)
             parallel(
-                stage('flask8 check')
-                    (
-                    echo "flask8 command"
-                    )
-                stage('Shell check')
-                    (
-                    echo "Shell command"
-                    )
-                stage('Hadolint Check')
-                    (
-                    echo "Hadolint command"
-                    )
-            )    
-        ) //end of 'check code'
-            stage('build')
-            parallel{ {
-                container('docker') { 
+                'flake8 check': {
+                    echo "Running flake8 command..."
+                    // כאן תבוא הפקודה האמיתית, למשל: sh 'flake8 .'
+                },
+                'Shell check': {
+                    echo "Running Shell check..."
+                },
+                'Hadolint Check': {
+                    echo "Running Hadolint command..."
+                }
+            )
+        }
+        
+        stage('Build Docker Image') {
+            container('docker') { 
                 echo "--------------------------------------------------------------"
                 echo "Building docker image..."
                 echo "--------------------------------------------------------------"
@@ -76,48 +74,47 @@ podTemplate(cloud: 'kubernetes', containers: [
                 echo "Docker image built successfully: ${appimage}:${apptag}"
                 echo "--------------------------------------------------------------"
             }
-            stage ('Security Scanning'){
-            parallel{
-            container('trivy'){
-                stage('Trivy Check')
-                {
-                sh "trivy image ."
-                }
-            }
-            container('bandit'){
-                stage('Bandit Check')
-                    {
-                    sh "bandit -r ."
+        }
+        
+        stage('Security Scanning') {
+            parallel(
+                'Trivy Check': {
+                    container('trivy') {
+                        // שים לב: שיניתי ל-fs (File System) כי אימג' ה-Docker נמצא בקונטיינר אחר
+                        sh "trivy fs ." 
                     }
-            }   
-            }\\ end of Security Scanning
+                },
+                'Bandit Check': {
+                    container('bandit') {
+                        sh "bandit -r ."
+                    }
+                }
+            )
         }   
-    }   
-}
+
+        stage('Push Image') {
             container('docker') {  
-            stage('push') {
-               withCredentials([usernamePassword(
+                withCredentials([usernamePassword(
                     credentialsId: 'dockerhub1',
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_TOKEN'
                 )]) {
-
-                sh """
-                    echo $DOCKER_TOKEN | docker login -u $DOCKER_USER --password-stdin
-                    docker push $appimage:$apptag
-                """
-                    
+                    sh """
+                        echo \$DOCKER_TOKEN | docker login -u \$DOCKER_USER --password-stdin
+                        docker push ${appimage}:${apptag}
+                    """
                 }
             }
         }
             
-        stage('helm install') {
+        stage('Helm Install') {
             container('helm') {
                 echo "--------------------------------------------------------------"
                 echo "Running Helm Template..."
                 echo "--------------------------------------------------------------"
                 sh "helm template ${appname} ./chart"
             }
-        } // end of helm
-    } // end of label
-  }
+        }
+        
+    } // end of node
+} // end of podTemplate
