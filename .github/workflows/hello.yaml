@@ -1,0 +1,21 @@
+name: trivy-scan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: ankurk91/install-trivy-cli-action@v2
+        with:
+          version: latest # or a specific version like 'v0.64.0'
+          cache: true #
+      - name: Run Trivy version
+        run: trivy --help
+
+      - name: Run Trivy scan
+        run: trivy fs .
+       
