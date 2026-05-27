@@ -18,7 +18,7 @@ podTemplate(cloud: 'kubernetes', containers: [
     ),
     containerTemplate(
         name: 'bandit',
-        image: 'pyupio/bandit:latest',
+        image: 'cytopia/bandit:latest',
         command: 'sleep',
         args: '99d'
     ),
