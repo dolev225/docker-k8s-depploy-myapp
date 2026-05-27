@@ -1,4 +1,4 @@
-def appname = "test-4"
+def appname = "test-2"
 def repo = "dolev1234" 
 def appimage = "${repo}/${appname}"
 def apptag = "${env.BUILD_NUMBER}"
@@ -120,3 +120,4 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
         } // end of helm
     } // end of label
+  }
