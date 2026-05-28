@@ -61,7 +61,6 @@ To run the project in your local environment, follow these steps:
    
 
 ###Jenkins pipeline 
-![Databrick project with snowlake](pipeline.png)
 To run the project in your Jenkins you need Required
 1. Access Jenkins - make sure you can accees jenkins
    1.1 Google Cloud Shell (Port Forward) - use port forward like the example
