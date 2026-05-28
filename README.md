@@ -60,8 +60,22 @@ To run the project in your local environment, follow these steps:
    ###
    
 
-how the pipeline look
+###Jenkins pipeline 
 ![Databrick project with snowlake](pipeline.png)
+To run the project in your Jenkins you need Required
+1. Access Jenkins - make sure you can accees jenkins
+   1.1 Google Cloud Shell (Port Forward) - use port forward like the example
+     kubectl --namespace default port-forward svc/jenkins 8080:8080
+   1.2 AWS (Service Access) - use ALB and AWS will give you the URL
+2. Install Required Plugins `kubernetes cli` , `blueocean  ` ,` Pipeline: Stage View`
+3. Add your github Credentials to Jenkins
+   3.1 open Manage Jenkins then go to Credentials ->System->Global->Add Credentials->Add Username with password
+   3.2 put you docker hub Credentials
+4. open a new pipeline and config the pipeline scripts form scm
+5. fill the git  repo and the brach
+6. prass on build now
 
+   ###Jenkins pipeline -- blue ocean
+![Databrick project with snowlake](pipeline.png)
 
 
