@@ -57,4 +57,11 @@ To run the project in your local environment, follow these steps:
 3. now we need to open the port to talk to the app by the command `kubectl port-forward service/<name>-svc 8000:80`
 4. open the brother and tape in the url `localhost:8000` to open the the app
 
+   ###
+   
+
+how the pipeline look
+![Databrick project with snowlake](pipeline.png)
+
+
 
