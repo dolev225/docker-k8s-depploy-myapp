@@ -64,10 +64,11 @@ jobs:
       - name: Run Trivy scan
         run: trivy fs . --exit-code 1 --severity HIGH,CRITICAL
       
+    
       - name: Run Bandit Scan
-        uses: actions/checkout@v4
+        uses: actions/hello-world-javascript-action@main
         run: echo "bandit"
-
+s
   Build-and-push: 
     runs-on: ubuntu-latest
     needs: [Linting, Security] 
