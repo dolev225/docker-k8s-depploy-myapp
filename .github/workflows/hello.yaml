@@ -20,13 +20,10 @@ jobs:
 
   Linting:
     runs-on: ubuntu-latest
-    
     steps:
-      # 1. משכים את הקוד מהמאגר (חובה לעשות פעם אחת בתחילת הג'וב)
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. הרצת Hadolint
       - name: Hadolint-scan
         run: echo "Hadolint command"
 
@@ -36,7 +33,6 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: 'Hadolint worked'
 
-      # 3. הרצת Bandit
       - name: Bandit-scan
         run: echo "bandit command"
 
@@ -46,7 +42,6 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: 'bandit worked'
 
-      # 4. הרצת Linting/Shell
       - name: Linting-scan
         run: echo "Shell command"
 
@@ -55,3 +50,50 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: 'Linting worked'
+
+  Security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy version
+        run: trivy --version
+
+      - name: Run Trivy scan
+        run: trivy fs . --exit-code 1 --severity HIGH,CRITICAL
+      
+      - name: Install Bandit CLI
+        uses: shundor/bandit-action@v1
+        with:
+          path: "."
+          level: high
+          confidence: high
+          exit_zero: true 
+
+  Build-and-push: 
+    runs-on: ubuntu-latest
+    needs: [Linting, Security] 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: . 
+          push: true 
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/test10:latest 
+      
+      - name: Notify Slack (Build Success)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'build and push is done'
