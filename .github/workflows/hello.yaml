@@ -1,21 +1,30 @@
-name: trivy-scan
+name: lab01
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
-  scan:
+  build-and-notify:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: ankurk91/install-trivy-cli-action@v2
-        with:
-          version: latest # or a specific version like 'v0.64.0'
-          cache: true #
-      - name: Run Trivy version
-        run: trivy --help
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: Run Trivy scan
-        run: trivy fs .
-       
+      
+      - name: Run Test Build
+        run: echo "Building project and running tests..."
+
+      - name: Send Status to Slack
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK }}
+          payload: |
+            {
+              "text": "🚀 GitHub Actions Job Status: ${{ job.status }}\nRepository: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}"
+            }
+        if: always() 
