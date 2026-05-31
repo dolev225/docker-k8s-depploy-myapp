@@ -1,13 +1,48 @@
-on: push
-name: Slack Notification Demo
+name: pipeline-project
+
+on:
+  push:
+  workflow_dispatch:
+
 jobs:
-  slackNotification:
-    name: Slack Notification
+  hello-world:
     runs-on: ubuntu-latest
+    environment: production
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Slack Notification
-      uses: rtCamp/action-slack-notify@v2
-      env:
+      - name: Run Hello World JS Action
+        uses: actions/hello-world-javascript-action@main
+        with:
+          who-to-greet: "GitHub Actions Student"
+          
+      - name: Print Production Environment Variable
+        run: echo "The current environment is:${{ vars.MY_ENVIRONMENT }}"
+  Linting:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Hadolint-scan
+        uses: actions/checkout@v4
+        uses: rtCamp/action-slack-notify@v2
+        
+        run: echo "Hadolint command"
+
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_MESSAGE: 'dolev225 ha melhack shel sdom'
+        SLACK_MESSAGE: 'Hadolint worked'
+
+      #bandit install & run 
+      - name: Bandit-scan
+        uses: actions/checkout@v4
+        uses: rtCamp/action-slack-notify@v2
+        run: echo "bandit command"
+
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_MESSAGE: 'bandit worked'
+      #shell install & run 
+      - name: Linting-scan
+        uses: actions/checkout@v4
+        uses: rtCamp/action-slack-notify@v2
+      # uses: Shell market place
+      - run: echo "Shell command"
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_MESSAGE: 'bandit worked'
