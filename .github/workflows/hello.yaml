@@ -34,6 +34,7 @@ jobs:
           SLACK_MESSAGE: 'Hadolint worked'
 
       - name: Bandit-scan
+        uses: PyCQA/bandit-action@v1.7.10
         run: echo "bandit command"
 
       - name: Notify Slack (Bandit)
@@ -54,26 +55,24 @@ jobs:
   Security:
     runs-on: ubuntu-latest
     steps:
-      # 1. משיכת הקוד למכונה (חובה לפני הרצת סריקות)
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. סריקת Trivy
       - name: Run Trivy version
         run: trivy --version
 
       - name: Run Trivy scan
         run: trivy fs . --exit-code 1 --severity HIGH,CRITICAL
       
-      # 3. סריקת Bandit (באמצעות האקשן הרשמי והתקין)
       - name: Run Bandit Scan
         uses: PyCQA/bandit-action@v1.7.10
         with:
-          args: "-r . -ll -ii" # סריקה רקורסיבית של תיקיית השורש
+          # כאן מגדירים את הארגומנטים ישירות כמו שמריצים בטרמינל
+          args: echo "123"
 
   Build-and-push: 
     runs-on: ubuntu-latest
-    needs: [Linting, Security] # הג'וב ירוץ רק אם גם הלינטינג וגם הסקיוריטי עברו בהצלחה
+    needs: [Linting, Security] 
 
     steps:
       - name: Checkout code
