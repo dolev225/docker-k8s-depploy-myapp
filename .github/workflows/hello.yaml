@@ -17,32 +17,41 @@ jobs:
           
       - name: Print Production Environment Variable
         run: echo "The current environment is:${{ vars.MY_ENVIRONMENT }}"
+
   Linting:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Hadolint-scan
+      # 1. משכים את הקוד מהמאגר (חובה לעשות פעם אחת בתחילת הג'וב)
+      - name: Checkout code
         uses: actions/checkout@v4
-        uses: rtCamp/action-slack-notify@v2
-        
+
+      # 2. הרצת Hadolint
+      - name: Hadolint-scan
         run: echo "Hadolint command"
 
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_MESSAGE: 'Hadolint worked'
-
-      #bandit install & run 
-      - name: Bandit-scan
-        uses: actions/checkout@v4
+      - name: Notify Slack (Hadolint)
         uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'Hadolint worked'
+
+      # 3. הרצת Bandit
+      - name: Bandit-scan
         run: echo "bandit command"
 
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_MESSAGE: 'bandit worked'
-      #shell install & run 
-      - name: Linting-scan
-        uses: actions/checkout@v4
+      - name: Notify Slack (Bandit)
         uses: rtCamp/action-slack-notify@v2
-      # uses: Shell market place
-      - run: echo "Shell command"
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        SLACK_MESSAGE: 'bandit worked'
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'bandit worked'
+
+      # 4. הרצת Linting/Shell
+      - name: Linting-scan
+        run: echo "Shell command"
+
+      - name: Notify Slack (Linting)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'Linting worked'
