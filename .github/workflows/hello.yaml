@@ -34,7 +34,6 @@ jobs:
           SLACK_MESSAGE: 'Hadolint worked'
 
       - name: Bandit-scan
-        uses: PyCQA/bandit-action@v1.7.10
         run: echo "bandit command"
 
       - name: Notify Slack (Bandit)
@@ -66,7 +65,6 @@ jobs:
       
     
       - name: Run Bandit Scan
-        uses: actions/hello-world-javascript-action@main
         run: echo "bandit"
 
   Build-and-push: 
