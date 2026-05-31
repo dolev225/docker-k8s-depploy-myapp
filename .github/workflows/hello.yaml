@@ -90,7 +90,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           SLACK_MESSAGE: 'build and push is done'
   
-  Helm install:
+  Helm-install:
     runs-on: ubuntu-latest
     needs: [Linting, Security,Build-and-push] 
     
