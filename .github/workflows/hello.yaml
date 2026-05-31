@@ -60,19 +60,23 @@ jobs:
       - name: Run Trivy version
         run: trivy --version
 
+      # תוקן: סורק את מערכת הקבצים המקומית (fs) במקום אימג' שעוד לא נבנה
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@v0.28.0 # גרסה יציבה מותאמת ל-fs
         with:
-          image-ref: 'docker.io/my-organization/my-app:${{ github.sha }}'
+          scan-type: 'fs'
+          scan-ref: '.'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
       
-    
+      # תוקן: שימוש באקשן הרשמי של Bandit שיבצע סריקה אמיתית
       - name: Run Bandit Scan
-        run: echo "bandit"
+        uses: PyCQA/bandit-action@v1
+        with:
+          args: "-r . -ll -ii"
 
   Build-and-push: 
     runs-on: ubuntu-latest
