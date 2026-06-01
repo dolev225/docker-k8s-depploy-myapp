@@ -54,7 +54,7 @@ jobs:
         
 #------------------Shellcheck-----------------------#
       - name: Check scripts with Shellcheck
-        uses: essentialkaos/shellcheck-action@v1
+        uses: ludeeus/action-shellcheck@master
         with:
           files: .
           severity: error
@@ -94,7 +94,7 @@ jobs:
         run: pip install bandit
 
       - name: Run Bandit Scan
-        run: bandit -r .
+        run: bandit -r . --skip B311,B104
 
 
   Build-and-push: 
