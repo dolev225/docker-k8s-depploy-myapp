@@ -42,9 +42,9 @@ jobs:
         with:
           python-version: '3.13'
           cache: 'pip' # caching pip dependencies
-        run: pip install -r requirements.txt
+      - run: pip install -r requirements.txt
 
-        run: python -m bandit -r .
+      -  run: python -m bandit -r .
 
       - name: Notify Slack (Bandit)
         uses: rtCamp/action-slack-notify@v2
