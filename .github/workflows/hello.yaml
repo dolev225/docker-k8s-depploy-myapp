@@ -49,7 +49,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: 'bandit passed'
+          SLACK_MESSAGE: 'flask passed'
 
         
 #------------------Shellcheck-----------------------#
@@ -83,6 +83,12 @@ jobs:
       - name: Run Trivy filesystem scan
         run: trivy fs --severity HIGH,CRITICAL --exit-code 1 .
 
+      - name: Notify Slack (Linting)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'passed Trivy scan '
+
 
 #------------------Bandit-----------------------#
       - name: Run Bandit Scan
@@ -95,6 +101,12 @@ jobs:
 
       - name: Run Bandit Scan
         run: bandit -r . --skip B311,B104
+
+      - name: Notify Slack (Linting)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: 'passed Bandit scan '
 
 
   Build-and-push: 
@@ -111,6 +123,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+
+      - name: Notify Slack (Linting)
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: ' login to docker hub passed '
 #------------------Docker build & Docker push-----------------------#
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -123,7 +141,7 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: 'build and push is done'
+          SLACK_MESSAGE: 'build and push passed and push to docker hub'
   
   Helm-install:
     runs-on: ubuntu-latest
@@ -132,3 +150,9 @@ jobs:
     steps:
     - name: Install Helm
       uses: azure/setup-helm@v4
+
+    - name: Notify Slack (Linting)
+      uses: rtCamp/action-slack-notify@v2
+      env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: ' helm install '
