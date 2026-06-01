@@ -41,7 +41,6 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.13'
-          cache: 'pip' # caching pip dependencies
       - run: pip install -r requirements.txt
 
       -  run: python -m bandit -r .
@@ -87,12 +86,16 @@ jobs:
 
 #------------------Bandit-----------------------#
       - name: Run Bandit Scan
-        uses: shundor/bandit-action@v1
-        with: 
-          path: "."
-          level: high
-          confidence: high
-          exit_zero: true   
+        uses: actions/setup-python@v6
+        with:
+          python-python: '3.13'
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit Scan
+        run: bandit -r .
+
 
   Build-and-push: 
     runs-on: ubuntu-latest
