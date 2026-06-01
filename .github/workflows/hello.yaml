@@ -24,6 +24,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+
+#------------------Hadolint-----------------------#
       - name: Hadolint-scan
         run: echo "Hadolint command"
 
@@ -31,25 +33,40 @@ jobs:
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: 'Hadolint worked'
+          SLACK_MESSAGE: 'Hadolint passed'
 
-      - name: Bandit-scan
-        run: echo "bandit command"
+
+#------------------Flask8-----------------------#
+      - name: Flask8-scan
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: 'pip' # caching pip dependencies
+        run: pip install -r requirements.txt
+
+        run: python -m bandit -r .
 
       - name: Notify Slack (Bandit)
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: 'bandit worked'
+          SLACK_MESSAGE: 'bandit passed'
 
-      - name: Linting-scan
-        run: echo "Shell command"
+        
+#------------------Shellcheck-----------------------#
+      - name: Check scripts with Shellcheck
+        uses: essentialkaos/shellcheck-action@v1
+        with:
+          files: .
+          severity: error
+          format: json
+          shell: bash
 
       - name: Notify Slack (Linting)
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: 'Linting worked'
+          SLACK_MESSAGE: 'passed Shellcheck scan '
 
   Security:
     runs-on: ubuntu-latest
@@ -57,11 +74,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner
-        run: echo "trivy command"
+#------------------Trivy-----------------------#
+      -  name: Install Trivy CLI
+         uses: ankurk91/install-trivy-cli-action@v2
+         with:
+           version: latest
+           cache: true
        
+      - name: Run Trivy filesystem scan
+        run: trivy fs --severity HIGH,CRITICAL --exit-code 1 .
+
+
+#------------------Bandit-----------------------#
       - name: Run Bandit Scan
-        run: echo "bandit"
+        uses: shundor/bandit-action@v1
+        with: 
+          path: "."
+          level: high
+          confidence: high
+          exit_zero: true   
 
   Build-and-push: 
     runs-on: ubuntu-latest
@@ -70,13 +101,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+#------------------Docker login-----------------------#
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+#------------------Docker build & Docker push-----------------------#
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -93,7 +125,7 @@ jobs:
   Helm-install:
     runs-on: ubuntu-latest
     needs: [Linting, Security,Build-and-push] 
-    
+#------------------Helm-install-----------------------#
     steps:
     - name: Install Helm
       uses: azure/setup-helm@v4
