@@ -1,4 +1,4 @@
-replicas: 3
+replicas: 1
 
 image:
   repository: dolev1234/myapp
