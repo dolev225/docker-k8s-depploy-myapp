@@ -114,5 +114,22 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
         }// end of helm install
         
-    } // end of node
-} 
+        stage('push to argoCD'){
+            container('docker'){
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-argoCD',
+                    usernameVariable: 'git_USER',
+                    passwordVariable: 'git_TOKEN'
+                )]) {
+            sh "git clone https://github.com/dolev225/docker-k8s-depploy-myapp.git"
+            sh "helm template ${appname} ./helm > devops-template.yaml "
+            sh "git clone https://github.com/dolev225/argoCD.git"
+            sh "mv devops-template.yaml argoCD"
+            sh  "cd argoCD"
+            sh "git add . devops-template.yaml && git commit -m 'jenkins-gen-devops-template.yaml'"
+            sh "git push https://github.com/dolev225/argoCD "
+                }
+            }
+        } // end of node
+    } 
+}
