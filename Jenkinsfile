@@ -124,6 +124,7 @@ podTemplate(cloud: 'kubernetes', containers: [
             sh "git clone https://github.com/dolev225/docker-k8s-depploy-myapp.git"
             sh "helm template ${appname} ./docker-k8s-depploy-myapp.git/helm > devops-template.yaml "
             sh "git clone https://github.com/dolev225/argoCD.git"
+            sh "ll -Ra"
             sh "mv devops-template.yaml argoCD/"
             sh  "cd argoCD"
             sh "git add . devops-template.yaml && git commit -m 'jenkins-gen-devops-template.yaml'"
