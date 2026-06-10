@@ -48,6 +48,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         } 
         
         stage('Linting') {
+            // שים לב: בשביל שהבדיקות האלו יעבדו, צריך להתקין את הכלים בפוד. כרגע זה רק echo כדי שלא ייכשל.
             parallel(
                 'flake8 check': {
                     echo "Running flake8 command..."
@@ -84,7 +85,8 @@ podTemplate(cloud: 'kubernetes', containers: [
                 'Bandit Scan': {
                     container('bandit') {
                         echo "Running Bandit Scan (Skipping B311,B104)..."
-                        echo "bandit -r . -x B311,B104"
+                        // תיקון: שינוי מ-echo ל-sh כדי שהסריקה תרוץ באמת
+                        sh "bandit -r . -x B311,B104"
                     }
                 }
             )// end of parallel
@@ -121,9 +123,12 @@ podTemplate(cloud: 'kubernetes', containers: [
                     usernameVariable: 'git_USER',
                     passwordVariable: 'git_TOKEN'
                 )]) {
-           sh "helm template ${appname} ./chart > devops-template.yaml"
+                    // יצירת הטמפלייט בתיקייה הראשית
+                    sh "helm template ${appname} ./chart > devops-template.yaml"
                     sh "git clone https://github.com/dolev225/argoCD.git"
+                    
                     // תיקון: שימוש בבלוק dir כדי לוודא שכל הפקודות רצות בתוך תיקיית הריפו ששוכפל
+                    dir('argoCD') {
                         sh "mv ../devops-template.yaml ."
                         sh "git config --global user.name 'bot'"
                         sh "git config --global user.email 'jenkins[bot]@example.com'"
@@ -132,7 +137,9 @@ podTemplate(cloud: 'kubernetes', containers: [
                         // שימוש ב-|| true למקרה שאין שינויים בקובץ, כדי שהבילד לא ייכשל סתם
                         sh "git commit -m 'jenkins-gen-devops-template.yaml' || echo 'No changes to commit'"
                         sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD HEAD"
+                    }
+                }
             }
-        } // end of node
-    } 
+        } // end of stage push to argoCD
+    } // end of node
 }
