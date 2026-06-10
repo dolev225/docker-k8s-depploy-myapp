@@ -121,16 +121,19 @@ podTemplate(cloud: 'kubernetes', containers: [
                     usernameVariable: 'git_USER',
                     passwordVariable: 'git_TOKEN'
                 )]) {
-            sh "helm template ${appname} ./chart > devops-template.yaml "
-            sh "git clone https://github.com/dolev225/argoCD.git"
-            sh "ls -Ra"
-            sh "mv devops-template.yaml argoCD/"
-            sh  "cd argoCD"
-            sh "git config --global user.name 'bot'"
-            sh "git config --global user.email 'jenkins[bot]@example.com'"
-            sh"git config --global --add safe.directory /home/jenkins/agent/workspace/dolev"
-            sh "git add . devops-template.yaml && git commit -m 'jenkins-gen-devops-template.yaml'"
-            sh "git push  https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD  HEAD: main"
+           sh "helm template ${appname} ./chart > devops-template.yaml"
+                    sh "git clone https://github.com/dolev225/argoCD.git"
+                    
+                    // תיקון: שימוש בבלוק dir כדי לוודא שכל הפקודות רצות בתוך תיקיית הריפו ששוכפל
+                    dir('argoCD') {
+                        sh "mv ../devops-template.yaml ."
+                        sh "git config --global user.name 'bot'"
+                        sh "git config --global user.email 'jenkins[bot]@example.com'"
+                        sh "git config --global --add safe.directory /home/jenkins/agent/workspace/dolev"
+                        sh "git add devops-template.yaml"
+                        // שימוש ב-|| true למקרה שאין שינויים בקובץ, כדי שהבילד לא ייכשל סתם
+                        sh "git commit -m 'jenkins-gen-devops-template.yaml' || echo 'No changes to commit'"
+                        sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD HEAD"
                 }
             }
         } // end of node
