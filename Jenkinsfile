@@ -127,7 +127,7 @@ podTemplate(cloud: 'kubernetes', containers: [
             sh "mv devops-template.yaml argoCD"
             sh  "cd argoCD"
             sh "git add . devops-template.yaml && git commit -m 'jenkins-gen-devops-template.yaml'"
-            sh "git push https://github.com/dolev225/argoCD "
+            sh "git push  https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD  "
                 }
             }
         } // end of node
