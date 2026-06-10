@@ -135,4 +135,4 @@ podTemplate(cloud: 'kubernetes', containers: [
             }
         } // end of node
     } 
-} מה לא בסדר 
+}
