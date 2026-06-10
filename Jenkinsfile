@@ -123,9 +123,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                 )]) {
            sh "helm template ${appname} ./chart > devops-template.yaml"
                     sh "git clone https://github.com/dolev225/argoCD.git"
-                    
                     // תיקון: שימוש בבלוק dir כדי לוודא שכל הפקודות רצות בתוך תיקיית הריפו ששוכפל
-                    dir('argoCD') {
                         sh "mv ../devops-template.yaml ."
                         sh "git config --global user.name 'bot'"
                         sh "git config --global user.email 'jenkins[bot]@example.com'"
@@ -134,7 +132,6 @@ podTemplate(cloud: 'kubernetes', containers: [
                         // שימוש ב-|| true למקרה שאין שינויים בקובץ, כדי שהבילד לא ייכשל סתם
                         sh "git commit -m 'jenkins-gen-devops-template.yaml' || echo 'No changes to commit'"
                         sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD HEAD"
-                }
             }
         } // end of node
     } 
