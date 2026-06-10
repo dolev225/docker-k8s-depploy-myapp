@@ -85,7 +85,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                     container('bandit') {
                         echo "Running Bandit Scan (Skipping B311,B104)..."
                         // תוקן מ-echo ל-sh כדי שהסריקה תרוץ באמת
-                        sh "bandit -r . -x B311,B104"
+                        sh "bandit -r . -s B311,B104"
                     }
                 }
             )// end of parallel
