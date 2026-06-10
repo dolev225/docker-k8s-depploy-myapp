@@ -126,6 +126,7 @@ podTemplate(cloud: 'kubernetes', containers: [
             sh "ls -Ra"
             sh "mv devops-template.yaml argoCD/"
             sh  "cd argoCD"
+            sh"git config --global --add safe.directory /home/jenkins/agent/workspace/dolev"
             sh "git add . devops-template.yaml && git commit -m 'jenkins-gen-devops-template.yaml'"
             sh "git push  https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD  "
                 }
