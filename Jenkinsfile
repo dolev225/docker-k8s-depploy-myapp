@@ -122,20 +122,24 @@ podTemplate(cloud: 'kubernetes', containers: [
                     usernameVariable: 'git_USER',
                     passwordVariable: 'git_TOKEN'
                 )]) {
-                    // יצירת הטמפלייט בתיקייה הנוכחית
-                    sh "helm template ${appname} ./chart > devops-template.yaml"
-                    sh "git clone https://github.com/dolev225/argoCD.git"
-                    
-                    // שימוש בבלוק dir כדי שכל פקודות ה-git ירוצו בתוך תיקיית הריפו ששוכפל
-                    dir('argoCD') {
-                        sh "mv ../devops-template.yaml ."
-                        sh "git config --global user.name 'bot'"
-                        sh "git config --global user.email 'jenkins[bot]@example.com'"
-                        sh "git config --global --add safe.directory ${WORKSPACE}/argoCD"
-                        sh "git add devops-template.yaml"
-                        // שימוש ב-|| true כדי למנוע כישלון של ה-Pipeline במידה ואין שינויים בקובץ
-                        sh "git commit -m 'jenkins-gen-devops-template.yaml' || echo 'No changes to commit'"
-                        sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD HEAD"
+                    sh "helm template test-2 ./chart --set image.repository=dolev1234/test-2 --set image.tag=${BUILD_NUMBER} > devops-template.yaml"
+            
+            // 2. שיפול ה-Repository של ה-ArgoCD
+            sh "git clone https://github.com/dolev225/argoCD.git"
+            
+            dir('argoCD') {
+                // 3. העברת המניפסט החדש לתוך התיקייה
+                sh "mv ../devops-template.yaml ."
+                
+                // 4. הגדרות Git מקומיות
+                sh "git config --global user.name 'Jenkins Bot'"
+                sh "git config --global user.email 'jenkins-bot@example.com'"
+                sh "git config --global --add safe.directory \$(pwd)"
+                
+                // 5. Commit ו-Push עם ה-URL המתוקן (.git) והגדרת ענף היעד
+                sh "git add devops-template.yaml"
+                sh "git commit -m 'Deploy version ${BUILD_NUMBER} [skip ci]' || echo 'No changes to commit'"
+                sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD.git HEAD:main"
                     }
                 }
             }
