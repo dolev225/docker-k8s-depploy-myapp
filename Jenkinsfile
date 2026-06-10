@@ -130,7 +130,7 @@ podTemplate(cloud: 'kubernetes', containers: [
             sh "git config --global user.email 'jenkins[bot]@example.com'"
             sh"git config --global --add safe.directory /home/jenkins/agent/workspace/dolev"
             sh "git add . devops-template.yaml && git commit -m 'jenkins-gen-devops-template.yaml'"
-            sh "git push  https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD  "
+            sh "git push  https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD  HEAD"
                 }
             }
         } // end of node
