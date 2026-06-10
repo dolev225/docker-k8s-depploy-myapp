@@ -115,7 +115,7 @@ podTemplate(cloud: 'kubernetes', containers: [
         }// end of helm install
         
         stage('push to argoCD'){
-            container('docker'){
+            container('helm'){
                 withCredentials([usernamePassword(
                     credentialsId: 'github-argoCD',
                     usernameVariable: 'git_USER',
