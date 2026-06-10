@@ -122,7 +122,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                     passwordVariable: 'git_TOKEN'
                 )]) {
             sh "git clone https://github.com/dolev225/docker-k8s-depploy-myapp.git"
-            sh "helm template ${appname} docker-k8s-depploy-myapp/helm > devops-template.yaml "
+            sh "helm template ${appname} ./docker-k8s-depploy-myapp.git/helm > devops-template.yaml "
             sh "git clone https://github.com/dolev225/argoCD.git"
             sh "mv devops-template.yaml argoCD/"
             sh  "cd argoCD"
