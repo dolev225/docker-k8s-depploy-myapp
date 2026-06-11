@@ -148,7 +148,7 @@ podTemplate(cloud: 'kubernetes', containers: [
                 sh "git config --global --add safe.directory \$(pwd)"
                 
                 sh "git add ${selectedEnv}/devops-template.yaml"
-                sh "git commit -m 'Deploy version ${BUILD_NUMBER} to ${selectedEnv}'" || echo 'No changes to commit'"
+                sh """git commit -m "Deploy version ${env.BUILD_NUMBER} to ${selectedEnv}" || echo "No changes to commit" """
                 sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD.git HEAD:main"
                     }
                 }
