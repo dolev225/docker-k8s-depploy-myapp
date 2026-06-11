@@ -1,3 +1,17 @@
+
+
+properties([
+    parameters([
+        choice(
+            name: 'TARGET_ENV',
+            choices: ['dev', 'qa', 'prod'],
+        )
+    ])
+])
+
+
+
+
 def appname = "test-2"
 def repo = "dolev1234" 
 def appimage = "${repo}/${appname}"
@@ -116,22 +130,25 @@ podTemplate(cloud: 'kubernetes', containers: [
         
         stage('push to argoCD') {
             container('helm') {
+                def selectedEnv = params.TARGET_ENV
+                echo "Deploying to environment: ${selectedEnv}"
+
                 withCredentials([usernamePassword(
                     credentialsId: 'github-argoCD',
                     usernameVariable: 'git_USER',
                     passwordVariable: 'git_TOKEN'
                 )]) {
-                    sh "helm template ${appname} ./chart --set image.repository=dolev1234/test-2 --set image.tag=${BUILD_NUMBER} > devops-template.yaml"
+                    sh "helm template ${appname} ./chart --set image.repository=${repo}/${appname} --set image.tag=${BUILD_NUMBER} > devops-template.yaml"
                     sh "git clone https://github.com/dolev225/argoCD.git"
             dir('argoCD') {
-                sh "mv ../devops-template.yaml ."
+                sh "mv ../devops-template.yaml ./${selectedEnv}/devops-template.yaml"
                 
                 sh "git config --global user.name 'Jenkins Bot'"
                 sh "git config --global user.email 'jenkins-bot@example.com'"
                 sh "git config --global --add safe.directory \$(pwd)"
                 
-                sh "git add devops-template.yaml"
-                sh "git commit -m 'Deploy version ${BUILD_NUMBER} ' || echo 'No changes to commit'"
+                sh "git add ${selectedEnv}/devops-template.yaml"
+                sh "git commit -m 'Deploy version ${BUILD_NUMBER} to ${selectedEnv}'' || echo 'No changes to commit'"
                 sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD.git HEAD:main"
                     }
                 }
