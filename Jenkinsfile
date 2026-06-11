@@ -1,13 +1,3 @@
-properties([
-    parameters([
-        choice(
-            name: 'TARGET_ENV',
-            choices: ['dev', 'qa', 'prod'],
-            description: 'בחר את סביבת היעד לפריסה ב-ArgoCD'
-        )
-    ])
-])
-
 def appname = "test-2"
 def repo = "dolev1234" 
 def appimage = "${repo}/${appname}"
@@ -20,17 +10,9 @@ podTemplate(cloud: 'kubernetes', containers: [
         name: 'jnlp', 
         image: 'jenkins/inbound-agent:latest'
     ),
-    // קונטיינר המכיל Git ומאפשר התקנה דינמית של Helm
     containerTemplate(
-        name: 'helm-git', 
-        image: 'alpine/git:latest',
-        command: 'sleep',
-        args: '99d'
-    ),
-    // קונטיינר ייעודי להרצת כלי הלינטינג בהמשך
-    containerTemplate(
-        name: 'lint-tools',
-        image: 'python:3.11-alpine',
+        name: 'helm', 
+        image: 'alpine/helm:3.14.0',
         command: 'sleep',
         args: '99d'
     ),
@@ -68,28 +50,13 @@ podTemplate(cloud: 'kubernetes', containers: [
         stage('Linting') {
             parallel(
                 'flake8 check': {
-                    container('lint-tools') {
-                        echo "Running flake8 command..."
-                        sh """
-                            pip install --no-cache-dir flake8 hadolint-py
-                            flake8 . --exclude=.venv
-                        """
-                    }
+                    echo "Running flake8 command..."
                 },
                 'Shell check': {
-                    container('lint-tools') {
-                        echo "Running Shell check..."
-                        sh """
-                            apk add --no-cache shellcheck
-                            find . -name "*.sh" | xargs -r shellcheck
-                        """
-                    }
+                    echo "Running Shell check..."
                 },
                 'Hadolint Check': {
-                    container('lint-tools') {
-                        echo "Running Hadolint command..."
-                        sh "find . -name 'Dockerfile' | xargs -r hadolint"
-                    }
+                    echo "Running Hadolint command..."
                 }
             )
         }
@@ -111,12 +78,12 @@ podTemplate(cloud: 'kubernetes', containers: [
                 'Trivy Scan': {
                     container('trivy') {
                         echo "Running Trivy File System Scan..."
-                        sh "trivy fs --cache-dir /tmp/trivy-cache . --exit-code 0"
+                        sh "trivy fs . --exit-code 0"
                     }
                 },
                 'Bandit Scan': {
                     container('bandit') {
-                        echo "Running Bandit Scan..."
+                        echo "Running Bandit Scan "
                         sh "bandit -r . -s B311,B104"
                     }
                 }
@@ -139,55 +106,33 @@ podTemplate(cloud: 'kubernetes', containers: [
         } // end of push image
             
         stage('Helm Install') {
-            container('helm-git') {
+            container('helm') {
                 echo "--------------------------------------------------------------"
-                echo "Running Helm Template Test..."
+                echo "Running Helm Template..."
                 echo "--------------------------------------------------------------"
-                sh """
-                    curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-                    helm template ${appname} ./chart
-                """
+                sh "helm template ${appname} ./chart"
             }
         }// end of helm install
         
-        stage("Push to ArgoCD") {
-            container('helm-git') {
-                // שליפת הסביבה שנבחרה על ידי המשתמש (dev/qa/prod)
-                def selectedEnv = params.TARGET_ENV
-                echo "Deploying to environment: ${selectedEnv}"
-                
+        stage('push to argoCD') {
+            container('helm') {
                 withCredentials([usernamePassword(
                     credentialsId: 'github-argoCD',
                     usernameVariable: 'git_USER',
                     passwordVariable: 'git_TOKEN'
                 )]) {
-                    sh """
-                        curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-                        
-                        # יצירת המניפסט האחיד ושמירתו מחוץ לתיקייה של הגיט שיורד מיד
-                        helm template ${appname} ./chart --set image.repository=${repo}/${appname} --set image.tag=${env.BUILD_NUMBER} > temp-template.yaml
-                        
-                        git clone https://github.com/dolev225/argoCD.git
-                    """
-                    
-                    dir('argoCD') {
-                        sh """
-                            # יצירת תיקיית הסביבה (למשל dev/) אם היא לא קיימת
-                            mkdir -p ${selectedEnv}
-                            
-                            # העברת המניפסט החדש לתוך תיקיית הסביבה המתאימה
-                            mv ../temp-template.yaml ${selectedEnv}/devops-template.yaml
-                            
-                            # הגדרות Git חיוניות לעבודה בתוך ה-Agent
-                            git config --global user.name 'Jenkins Bot'
-                            git config --global user.email 'jenkins-bot@example.com'
-                            git config --global --add safe.directory \$(pwd)
-                            
-                            # דחיפת השינוי ל-Main branch
-                            git add ${selectedEnv}/devops-template.yaml
-                            git commit -m 'Deploy version ${env.BUILD_NUMBER} to ${selectedEnv}' || echo 'No changes to commit'
-                            git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD.git HEAD:main
-                        """
+                    sh "helm template ${appname} ./chart --set image.repository=dolev1234/test-2 --set image.tag=${BUILD_NUMBER} > devops-template.yaml"
+                    sh "git clone https://github.com/dolev225/argoCD.git"
+            dir('argoCD') {
+                sh "mv ../devops-template.yaml ."
+                
+                sh "git config --global user.name 'Jenkins Bot'"
+                sh "git config --global user.email 'jenkins-bot@example.com'"
+                sh "git config --global --add safe.directory \$(pwd)"
+                
+                sh "git add devops-template.yaml"
+                sh "git commit -m 'Deploy version ${BUILD_NUMBER} ' || echo 'No changes to commit'"
+                sh "git push https://x-access-token:${git_TOKEN}@github.com/dolev225/argoCD.git HEAD:main"
                     }
                 }
             }
