@@ -156,12 +156,12 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git clone https://x-access-token:${TARGET_REPO_PAT}@github.com/dolev225/<argoCD.git target-repo
+          git clone git clone https://github.com/dolev225/argoCD.git
+
+          cd argoCD
+
+          helm template test10 ./chart --set image.repository=dolev1234/test10 --set image.tag=35 > devops-template.yaml
           
-          mkdir -p target-repo/charts
-          cp -r ./my-chart target-repo/charts/
-          
-          cd target-repo
           git add .
           git commit -m "Automated update of Helm chart from CI/CD pipeline (Commit: ${{ github.sha }})" || echo "No changes to commit"
           git push
