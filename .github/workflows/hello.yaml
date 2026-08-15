@@ -146,13 +146,32 @@ jobs:
   Helm-install:
     runs-on: ubuntu-latest
     needs: [Linting, Security,Build-and-push] 
-#------------------Helm-install-----------------------#
+#------------------Helm-template-----------------------#
     steps:
-    - name: Install Helm
+    - name: Helm template
       uses: azure/setup-helm@v4
+      env:
+        ARGET_REPO_PAT: ${{ secrets.TARGET_REPO_PAT }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git clone https://x-access-token:${TARGET_REPO_PAT}@github.com/dolev225/<argoCD.git target-repo
+          
+          mkdir -p target-repo/charts
+          cp -r ./my-chart target-repo/charts/
+          
+          cd target-repo
+          git add .
+          git commit -m "Automated update of Helm chart from CI/CD pipeline (Commit: ${{ github.sha }})" || echo "No changes to commit"
+          git push
+            |
+
 
     - name: Notify Slack (Linting)
       uses: rtCamp/action-slack-notify@v2
       env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_MESSAGE: ' helm install '
+          SLACK_MESSAGE: ' helm template '
+
+    
